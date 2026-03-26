@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: hostel-management-platform-api
+    runtime: node
+    rootDir: server
+    plan: free
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm run start:render
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: CLIENT_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+      - key: HASH_SALT
+        sync: false
+      - key: HOSTEL_NAME
+        value: South Asian University Hostel
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false

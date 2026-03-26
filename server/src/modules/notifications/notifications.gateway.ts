@@ -9,6 +9,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { getAllowedOrigins } from '../../common/utils/allowed-origins';
 
 type SocketPayload = {
   sub: string;
@@ -16,7 +17,7 @@ type SocketPayload = {
 };
 
 @WebSocketGateway({
-  cors: { origin: process.env.CLIENT_URL, credentials: true },
+  cors: { origin: getAllowedOrigins(), credentials: true },
   namespace: '/',
 })
 export class NotificationsGateway

@@ -1,5 +1,16 @@
 # Hostel Management Platform
 
+## Hosting
+
+For the recommended production deployment stack:
+
+- `client/` on Vercel
+- `server/` on Render
+- Neon for PostgreSQL
+- Upstash for Redis
+
+use [HOSTING.md](/c:/Users/amarr/OneDrive/Desktop/smarthack/HM/hostel-platform/HOSTING.md).
+
 Full-stack hostel management monorepo with:
 
 - `client`: React + Vite + TypeScript frontend

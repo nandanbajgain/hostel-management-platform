@@ -6,14 +6,26 @@ import helmet from 'helmet';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import {
+  getAllowedOrigins,
+  isAllowedOrigin,
+} from './common/utils/allowed-origins';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const allowedOrigins = getAllowedOrigins();
   app.use(cookieParser());
   app.use(helmet());
   app.use(compression());
   app.enableCors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      if (isAllowedOrigin(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error('Origin not allowed by CORS'), false);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   });
@@ -37,8 +49,10 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
 
   const port = process.env.PORT || 3001;
-  await app.listen(port);
-  console.log(`Server running on http://localhost:${port}/api/v1`);
-  console.log(`Swagger docs at http://localhost:${port}/api/docs`);
+  const host = process.env.HOST || '0.0.0.0';
+  await app.listen(port, host);
+  console.log(`Server running on http://${host}:${port}/api/v1`);
+  console.log(`Allowed client origins: ${allowedOrigins.join(', ')}`);
+  console.log(`Swagger docs at http://${host}:${port}/api/docs`);
 }
 bootstrap();
