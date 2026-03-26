@@ -4,6 +4,7 @@ import { BedDouble, Users } from 'lucide-react'
 import api from '@/services/api'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import EmptyState from '@/components/shared/EmptyState'
+import RoomListSkeleton from '@/components/shared/RoomListSkeleton'
 import StatusBadge from '@/components/shared/StatusBadge'
 import { useAuthStore } from '@/store/authStore'
 
@@ -35,7 +36,15 @@ export default function MyRoomPage() {
     [roomsQuery.data, user?.id]
   )
 
-  if (roomsQuery.isLoading) return <LoadingSpinner />
+  if (roomsQuery.isLoading) {
+    return (
+      <div style={{ display: 'grid', gap: 20 }}>
+        <LoadingSpinner />
+        <RoomListSkeleton rows={2} />
+      </div>
+    )
+  }
+
   if (!room) {
     return (
       <EmptyState

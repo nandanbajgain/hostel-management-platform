@@ -2,6 +2,8 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'react-hot-toast'
+import OfflineBanner from '@/components/shared/OfflineBanner'
+import ErrorBoundary from '@/components/shared/ErrorBoundary'
 import { queryClient } from '@/lib/queryClient'
 import { useAuthStore } from '@/store/authStore'
 import AppLayout from '@/components/layout/AppLayout'
@@ -44,87 +46,83 @@ export default function App() {
   const { user } = useAuthStore()
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Suspense fallback={<LoadingSpinner fullScreen />}>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/track" element={<TrackComplaintPage />} />
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <OfflineBanner />
+          <Suspense fallback={<LoadingSpinner fullScreen />}>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/track" element={<TrackComplaintPage />} />
 
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <AppLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Navigate to="/dashboard" replace />} />
               <Route
-                path="dashboard"
+                path="/"
                 element={
-                  user?.role === 'ADMIN' ? (
-                    <AdminDashboard />
-                  ) : user?.role === 'WARDEN' ? (
-                    <WardenDashboard />
-                  ) : (
-                    <StudentDashboard />
-                  )
-                }
-              />
-              <Route
-                path="rooms"
-                element={
-                  <ProtectedRoute roles={['ADMIN', 'WARDEN']}>
-                    <RoomManagement />
+                  <ProtectedRoute>
+                    <AppLayout />
                   </ProtectedRoute>
                 }
-              />
-              <Route
-                path="my-room"
-                element={
-                  <ProtectedRoute roles={['STUDENT']}>
-                    <MyRoomPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="complaints" element={<ComplaintsPage />} />
-              <Route
-                path="complaints/anonymous"
-                element={<AnonymousComplaintPage />}
-              />
-              <Route
-                path="admin/complaints"
-                element={
-                  <ProtectedRoute roles={['ADMIN', 'WARDEN']}>
-                    <ComplaintsAdmin />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="maintenance"
-                element={
-                  <ProtectedRoute roles={['ADMIN', 'WARDEN']}>
-                    <MaintenanceAdmin />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="students"
-                element={
-                  <ProtectedRoute roles={['ADMIN', 'WARDEN']}>
-                    <StudentManagement />
-                  </ProtectedRoute>
-                }
-              />
-            </Route>
+              >
+                <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route
+                  path="dashboard"
+                  element={
+                    user?.role === 'ADMIN' ? (
+                      <AdminDashboard />
+                    ) : user?.role === 'WARDEN' ? (
+                      <WardenDashboard />
+                    ) : (
+                      <StudentDashboard />
+                    )
+                  }
+                />
+                <Route
+                  path="rooms"
+                  element={
+                    <ProtectedRoute roles={['ADMIN', 'WARDEN']}>
+                      <RoomManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="my-room"
+                  element={
+                    <ProtectedRoute roles={['STUDENT']}>
+                      <MyRoomPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="complaints" element={<ComplaintsPage />} />
+                <Route
+                  path="complaints/anonymous"
+                  element={<AnonymousComplaintPage />}
+                />
+                <Route
+                  path="admin/complaints"
+                  element={
+                    <ProtectedRoute roles={['ADMIN', 'WARDEN']}>
+                      <ComplaintsAdmin />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="maintenance" element={<MaintenanceAdmin />} />
+                <Route
+                  path="students"
+                  element={
+                    <ProtectedRoute roles={['ADMIN', 'WARDEN']}>
+                      <StudentManagement />
+                    </ProtectedRoute>
+                  }
+                />
+              </Route>
 
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </Suspense>
-        <Toaster position="top-right" />
-      </BrowserRouter>
-    </QueryClientProvider>
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </Suspense>
+          <Toaster position="top-right" />
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ErrorBoundary>
   )
 }

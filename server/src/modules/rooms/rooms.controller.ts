@@ -8,6 +8,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { RoomsService } from './rooms.service';
 import { AllocateRoomDto, CreateRoomDto } from './dto/create-room.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -15,6 +16,8 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RoomStatus } from '@prisma/client';
 
+@ApiTags('Rooms')
+@ApiBearerAuth()
 @Controller('rooms')
 @UseGuards(JwtAuthGuard)
 export class RoomsController {

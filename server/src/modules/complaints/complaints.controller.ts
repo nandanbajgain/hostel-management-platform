@@ -9,6 +9,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ComplaintCategory, ComplaintStatus } from '@prisma/client';
 import type { Request } from 'express';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -25,6 +26,7 @@ type AuthenticatedRequest = Request & {
   user: { id: string; role: string; email: string; name: string };
 };
 
+@ApiTags('Complaints')
 @Controller('complaints')
 export class ComplaintsController {
   constructor(
@@ -38,12 +40,14 @@ export class ComplaintsController {
   }
 
   @Post()
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   create(@Req() req: AuthenticatedRequest, @Body() dto: CreateComplaintDto) {
     return this.complaintsService.create(req.user.id, dto);
   }
 
   @Post('anonymous')
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   submitAnonymous(
     @Req() req: AuthenticatedRequest,
@@ -53,6 +57,7 @@ export class ComplaintsController {
   }
 
   @Get()
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'WARDEN')
   findAll(
@@ -63,12 +68,14 @@ export class ComplaintsController {
   }
 
   @Get('mine')
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   findMine(@Req() req: AuthenticatedRequest) {
     return this.complaintsService.findMyComplaints(req.user.id);
   }
 
   @Patch(':id/status')
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'WARDEN')
   updateStatus(@Param('id') id: string, @Body() dto: UpdateComplaintStatusDto) {

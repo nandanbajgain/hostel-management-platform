@@ -4,6 +4,7 @@ export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
 export type RoomStatus = 'AVAILABLE' | 'OCCUPIED' | 'MAINTENANCE' | 'RESERVED'
 export type ComplaintStatus = 'PENDING' | 'UNDER_REVIEW' | 'IN_PROGRESS' | 'RESOLVED' | 'REJECTED'
 export type ComplaintCategory = 'PLUMBING' | 'ELECTRICAL' | 'CLEANING' | 'FURNITURE' | 'SECURITY' | 'FOOD' | 'INTERNET' | 'OTHER'
+export type MaintenanceStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'
 
 export interface User {
   id: string
@@ -66,6 +67,28 @@ export interface DashboardStats {
   openComplaints: number
   pendingMaintenance: number
   occupancyPercent: number
+}
+
+export interface MaintenanceTask {
+  id: string
+  title: string
+  description: string
+  location: string
+  assignedTo?: string
+  status: MaintenanceStatus
+  scheduledAt: string
+  completedAt?: string | null
+  createdAt: string
+}
+
+export interface Announcement {
+  id: string
+  title: string
+  content: string
+  isUrgent: boolean
+  createdBy: string
+  expiresAt?: string | null
+  createdAt: string
 }
 
 export interface ChatMessage {

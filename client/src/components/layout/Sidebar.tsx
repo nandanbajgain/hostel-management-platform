@@ -20,6 +20,7 @@ const studentNav = [
   { to: '/my-room', icon: Home, label: 'My Room' },
   { to: '/complaints', icon: AlertCircle, label: 'My Complaints' },
   { to: '/complaints/anonymous', icon: EyeOff, label: 'Report Anonymously' },
+  { to: '/maintenance', icon: Wrench, label: 'Maintenance' },
   { to: '/track', icon: Search, label: 'Track Complaint' },
 ]
 

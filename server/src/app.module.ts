@@ -12,13 +12,23 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { RoomsModule } from './modules/rooms/rooms.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { UsersModule } from './modules/users/users.module';
+import { RedisModule } from './infra/redis/redis.module';
+import { RedisThrottlerStorage } from './infra/redis/redis-throttler.storage';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    ThrottlerModule.forRootAsync({
+      imports: [RedisModule],
+      inject: [RedisThrottlerStorage],
+      useFactory: (storage: RedisThrottlerStorage) => ({
+        throttlers: [{ name: 'default', ttl: 60_000, limit: 100 }],
+        storage,
+      }),
+    }),
     PrismaModule,
+    RedisModule,
     AuthModule,
     RoomsModule,
     ComplaintsModule,

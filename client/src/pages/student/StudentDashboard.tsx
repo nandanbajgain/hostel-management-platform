@@ -2,10 +2,12 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { AlertCircle, BedDouble, Clock3, Wifi } from 'lucide-react'
 import api from '@/services/api'
+import AnnouncementsPanel from '@/components/announcements/AnnouncementsPanel'
 import StatsGrid from '@/components/dashboard/StatsGrid'
 import ActivityFeed from '@/components/dashboard/ActivityFeed'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import EmptyState from '@/components/shared/EmptyState'
+import StatsGridSkeleton from '@/components/shared/StatsGridSkeleton'
 import type { Complaint } from '@/types'
 import { useAuthStore } from '@/store/authStore'
 
@@ -37,7 +39,14 @@ export default function StudentDashboard() {
     [roomsQuery.data, user?.id]
   )
 
-  if (complaintsQuery.isLoading || roomsQuery.isLoading) return <LoadingSpinner />
+  if (complaintsQuery.isLoading || roomsQuery.isLoading) {
+    return (
+      <div style={{ display: 'grid', gap: 24 }}>
+        <StatsGridSkeleton />
+        <LoadingSpinner />
+      </div>
+    )
+  }
 
   const complaints = complaintsQuery.data || []
 
@@ -96,7 +105,9 @@ export default function StudentDashboard() {
                 border: '1px solid var(--border-default)',
               }}
             >
-              <div style={{ fontFamily: 'Sora', fontSize: 32, marginBottom: 4 }}>{myRoom.number}</div>
+              <div style={{ fontFamily: 'Sora', fontSize: 32, marginBottom: 4 }}>
+                {myRoom.number}
+              </div>
               <div style={{ color: 'var(--text-secondary)', marginBottom: 18 }}>
                 Block {myRoom.block} · Floor {myRoom.floor}
               </div>
@@ -137,6 +148,8 @@ export default function StudentDashboard() {
           }))}
         />
       </div>
+
+      <AnnouncementsPanel />
     </div>
   )
 }

@@ -1,11 +1,30 @@
 import { Injectable } from '@nestjs/common';
+import { RedisService } from '../../infra/redis/redis.service';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class DashboardService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redisService: RedisService,
+  ) {}
 
   async getAdminStats() {
+    const cacheKey = 'dashboard:admin-stats';
+    const cached = await this.redisService.get<{
+      totalStudents: number;
+      openComplaints: number;
+      pendingMaintenance: number;
+      occupiedRooms: number;
+      availableRooms: number;
+      totalRooms: number;
+      occupancyPercent: number;
+      recentActivity: unknown[];
+    }>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const [
       totalStudents,
       openComplaints,
@@ -46,7 +65,7 @@ export class DashboardService {
       roomStats.find((room) => room.status === 'AVAILABLE')?._count.status ?? 0;
     const total = roomStats.reduce((acc, room) => acc + room._count.status, 0);
 
-    return {
+    const stats = {
       totalStudents,
       openComplaints,
       pendingMaintenance,
@@ -56,5 +75,7 @@ export class DashboardService {
       occupancyPercent: total ? Math.round((occupied / total) * 100) : 0,
       recentActivity,
     };
+    await this.redisService.set(cacheKey, stats, 60);
+    return stats;
   }
 }

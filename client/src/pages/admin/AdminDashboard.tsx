@@ -14,7 +14,9 @@ import {
 } from 'recharts'
 import { AlertCircle, BedDouble, Users, Wrench } from 'lucide-react'
 import api from '@/services/api'
+import AnnouncementsPanel from '@/components/announcements/AnnouncementsPanel'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
+import StatsGridSkeleton from '@/components/shared/StatsGridSkeleton'
 import StatusBadge from '@/components/shared/StatusBadge'
 import StatsGrid from '@/components/dashboard/StatsGrid'
 
@@ -49,14 +51,21 @@ export default function AdminDashboard() {
     queryFn: () => api.get('/complaints').then((r) => r.data),
   })
 
-  if (isLoading) return <LoadingSpinner />
+  if (isLoading) {
+    return (
+      <div style={{ display: 'grid', gap: 24 }}>
+        <StatsGridSkeleton />
+        <LoadingSpinner />
+      </div>
+    )
+  }
 
   return (
     <div style={{ display: 'grid', gap: 24 }}>
       <div>
         <h1 style={{ fontFamily: 'Sora', fontSize: 24, margin: 0 }}>Admin Dashboard</h1>
         <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
-          SAU International Hostel live operations overview.
+          South Asian University live operations overview.
         </p>
       </div>
 
@@ -136,19 +145,21 @@ export default function AdminDashboard() {
           Recent Complaints
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {(recentComplaints || []).slice(0, 8).map((c: any) => (
-            <div key={c.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border-default)' }}>
+          {(recentComplaints || []).slice(0, 8).map((complaint: any) => (
+            <div key={complaint.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border-default)' }}>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 14, fontWeight: 500 }}>{c.title}</div>
+                <div style={{ fontSize: 14, fontWeight: 500 }}>{complaint.title}</div>
                 <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>
-                  {c.isAnonymous ? 'Anonymous' : c.user?.name} · {c.category}
+                  {complaint.isAnonymous ? 'Anonymous' : complaint.user?.name} · {complaint.category}
                 </div>
               </div>
-              <StatusBadge status={c.status} />
+              <StatusBadge status={complaint.status} />
             </div>
           ))}
         </div>
       </div>
+
+      <AnnouncementsPanel />
     </div>
   )
 }

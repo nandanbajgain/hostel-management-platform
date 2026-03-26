@@ -3,13 +3,17 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { RedisService } from '../../infra/redis/redis.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AllocateRoomDto, CreateRoomDto } from './dto/create-room.dto';
 import { RoomStatus } from '@prisma/client';
 
 @Injectable()
 export class RoomsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redisService: RedisService,
+  ) {}
 
   async findAll(block?: string, floor?: number, status?: RoomStatus) {
     return this.prisma.room.findMany({
@@ -138,6 +142,19 @@ export class RoomsService {
   }
 
   async getStats() {
+    const cacheKey = 'rooms:stats';
+    const cached = await this.redisService.get<{
+      total: number;
+      occupied: number;
+      available: number;
+      maintenance: number;
+      totalStudents: number;
+      occupancyPercent: number;
+    }>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const [total, occupied, available, maintenance, totalStudents] =
       await Promise.all([
         this.prisma.room.count(),
@@ -147,7 +164,7 @@ export class RoomsService {
         this.prisma.roomAllocation.count({ where: { isActive: true } }),
       ]);
 
-    return {
+    const stats = {
       total,
       occupied,
       available,
@@ -155,5 +172,7 @@ export class RoomsService {
       totalStudents,
       occupancyPercent: total ? Math.round((occupied / total) * 100) : 0,
     };
+    await this.redisService.set(cacheKey, stats, 30);
+    return stats;
   }
 }

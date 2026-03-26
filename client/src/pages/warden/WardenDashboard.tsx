@@ -1,9 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { AlertTriangle, BedDouble, ShieldCheck, Wrench } from 'lucide-react'
 import api from '@/services/api'
+import AnnouncementsPanel from '@/components/announcements/AnnouncementsPanel'
 import StatsGrid from '@/components/dashboard/StatsGrid'
 import ActivityFeed from '@/components/dashboard/ActivityFeed'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
+import StatsGridSkeleton from '@/components/shared/StatsGridSkeleton'
 
 export default function WardenDashboard() {
   const roomsStatsQuery = useQuery({
@@ -15,7 +17,14 @@ export default function WardenDashboard() {
     queryFn: () => api.get('/complaints').then((res) => res.data as any[]),
   })
 
-  if (roomsStatsQuery.isLoading || complaintsQuery.isLoading) return <LoadingSpinner />
+  if (roomsStatsQuery.isLoading || complaintsQuery.isLoading) {
+    return (
+      <div style={{ display: 'grid', gap: 24 }}>
+        <StatsGridSkeleton />
+        <LoadingSpinner />
+      </div>
+    )
+  }
 
   const complaints = complaintsQuery.data || []
 
@@ -71,6 +80,8 @@ export default function WardenDashboard() {
           timestamp: item.createdAt,
         }))}
       />
+
+      <AnnouncementsPanel />
     </div>
   )
 }
