@@ -6,8 +6,6 @@ export const queryClient = new QueryClient({
       staleTime: 1000 * 60 * 5,
       retry: 1,
       refetchOnWindowFocus: false,
-      throwOnError: (error: any) =>
-        !error?.response || (error.response?.status ?? 0) >= 500,
     },
   },
 })

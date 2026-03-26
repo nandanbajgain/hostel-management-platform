@@ -54,6 +54,32 @@ export class RoomsService {
     return room;
   }
 
+  async findMyRoom(userId: string) {
+    const allocation = await this.prisma.roomAllocation.findUnique({
+      where: { userId },
+      include: {
+        room: {
+          include: {
+            allocations: {
+              where: { isActive: true },
+              include: {
+                user: {
+                  select: { id: true, name: true, email: true, phone: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!allocation?.isActive) {
+      return null;
+    }
+
+    return allocation.room;
+  }
+
   async create(dto: CreateRoomDto) {
     return this.prisma.room.create({
       data: {

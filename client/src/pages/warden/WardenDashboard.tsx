@@ -8,16 +8,12 @@ import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import StatsGridSkeleton from '@/components/shared/StatsGridSkeleton'
 
 export default function WardenDashboard() {
-  const roomsStatsQuery = useQuery({
-    queryKey: ['room-stats'],
-    queryFn: () => api.get('/rooms/stats').then((res) => res.data),
-  })
-  const complaintsQuery = useQuery({
-    queryKey: ['warden-complaints'],
-    queryFn: () => api.get('/complaints').then((res) => res.data as any[]),
+  const dashboardQuery = useQuery({
+    queryKey: ['warden-dashboard'],
+    queryFn: () => api.get('/dashboard/admin-stats').then((res) => res.data),
   })
 
-  if (roomsStatsQuery.isLoading || complaintsQuery.isLoading) {
+  if (dashboardQuery.isLoading) {
     return (
       <div style={{ display: 'grid', gap: 24 }}>
         <StatsGridSkeleton />
@@ -26,7 +22,7 @@ export default function WardenDashboard() {
     )
   }
 
-  const complaints = complaintsQuery.data || []
+  const stats = dashboardQuery.data
 
   return (
     <div style={{ display: 'grid', gap: 24 }}>
@@ -42,28 +38,28 @@ export default function WardenDashboard() {
           {
             icon: BedDouble,
             label: 'Total Rooms',
-            value: roomsStatsQuery.data?.total ?? 0,
-            sub: `${roomsStatsQuery.data?.available ?? 0} available`,
+            value: stats?.totalRooms ?? 0,
+            sub: `${stats?.availableRooms ?? 0} available`,
             color: '#6C63FF',
           },
           {
             icon: ShieldCheck,
             label: 'Active Residents',
-            value: roomsStatsQuery.data?.totalStudents ?? 0,
+            value: stats?.totalStudents ?? 0,
             sub: 'Current allocations',
             color: '#22D3EE',
           },
           {
             icon: AlertTriangle,
             label: 'Open Complaints',
-            value: complaints.filter((item) => item.status !== 'RESOLVED').length,
+            value: stats?.openComplaints ?? 0,
             sub: 'Needs supervision',
             color: '#EF4444',
           },
           {
             icon: Wrench,
             label: 'Maintenance Rooms',
-            value: roomsStatsQuery.data?.maintenance ?? 0,
+            value: stats?.pendingMaintenance ?? 0,
             sub: 'Unavailable rooms',
             color: '#F59E0B',
           },
@@ -72,7 +68,7 @@ export default function WardenDashboard() {
 
       <ActivityFeed
         title="Recent Resident Issues"
-        items={complaints.slice(0, 6).map((item) => ({
+        items={(stats?.recentActivity || []).slice(0, 6).map((item: any) => ({
           id: item.id,
           title: item.title,
           subtitle: `${item.isAnonymous ? 'Anonymous' : item.user?.name || 'Student'} · ${item.category}`,

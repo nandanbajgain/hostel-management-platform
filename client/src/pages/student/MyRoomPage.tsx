@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { BedDouble, Users } from 'lucide-react'
 import api from '@/services/api'
@@ -23,20 +22,14 @@ type Room = {
 
 export default function MyRoomPage() {
   const { user } = useAuthStore()
-  const roomsQuery = useQuery({
-    queryKey: ['rooms'],
-    queryFn: () => api.get('/rooms').then((res) => res.data as Room[]),
+  const roomQuery = useQuery({
+    queryKey: ['my-room'],
+    queryFn: () => api.get('/rooms/my').then((res) => res.data as Room | null),
   })
 
-  const room = useMemo(
-    () =>
-      roomsQuery.data?.find((item) =>
-        item.allocations.some((allocation) => allocation.user.id === user?.id)
-      ),
-    [roomsQuery.data, user?.id]
-  )
+  const room = roomQuery.data || undefined
 
-  if (roomsQuery.isLoading) {
+  if (roomQuery.isLoading) {
     return (
       <div style={{ display: 'grid', gap: 20 }}>
         <LoadingSpinner />
@@ -98,7 +91,9 @@ export default function MyRoomPage() {
           </div>
 
           <div style={{ marginTop: 20 }}>
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 10 }}>Amenities</div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 10 }}>
+              Amenities
+            </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {room.amenities.map((amenity) => (
                 <span

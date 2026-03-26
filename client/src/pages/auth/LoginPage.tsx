@@ -7,7 +7,6 @@ import {
   ArrowRight,
   Eye,
   EyeOff,
-  KeyRound,
   ShieldCheck,
   Sparkles,
   UserRoundCheck,
@@ -198,35 +197,6 @@ export default function LoginPage() {
               ))}
             </div>
 
-            <div
-              style={{
-                padding: '14px 16px',
-                borderRadius: 14,
-                background: 'rgba(245,158,11,0.08)',
-                border: '1px solid rgba(245,158,11,0.2)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  color: 'var(--accent-warning)',
-                  fontWeight: 700,
-                  marginBottom: 8,
-                }}
-              >
-                <KeyRound size={16} />
-                Demo accounts
-              </div>
-              <div style={{ color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.75 }}>
-                Admin: <strong style={{ color: 'var(--text-primary)' }}>admin@sau.ac.in</strong> / admin123
-                <br />
-                Warden: <strong style={{ color: 'var(--text-primary)' }}>warden@sau.ac.in</strong> / warden123
-                <br />
-                Student: <strong style={{ color: 'var(--text-primary)' }}>student@sau.ac.in</strong> / student123
-              </div>
-            </div>
           </div>
         </aside>
 

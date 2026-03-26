@@ -9,7 +9,6 @@ import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import EmptyState from '@/components/shared/EmptyState'
 import StatsGridSkeleton from '@/components/shared/StatsGridSkeleton'
 import type { Complaint } from '@/types'
-import { useAuthStore } from '@/store/authStore'
 
 type RoomApiItem = {
   id: string
@@ -21,25 +20,19 @@ type RoomApiItem = {
 }
 
 export default function StudentDashboard() {
-  const { user } = useAuthStore()
   const complaintsQuery = useQuery({
     queryKey: ['student-complaints'],
     queryFn: () => api.get('/complaints/mine').then((res) => res.data as Complaint[]),
   })
-  const roomsQuery = useQuery({
-    queryKey: ['rooms'],
-    queryFn: () => api.get('/rooms').then((res) => res.data as RoomApiItem[]),
+
+  const myRoomQuery = useQuery({
+    queryKey: ['my-room-dashboard'],
+    queryFn: () => api.get('/rooms/my').then((res) => res.data as RoomApiItem | null),
   })
 
-  const myRoom = useMemo(
-    () =>
-      roomsQuery.data?.find((room) =>
-        room.allocations.some((allocation) => allocation.user.id === user?.id)
-      ),
-    [roomsQuery.data, user?.id]
-  )
+  const myRoom = useMemo(() => myRoomQuery.data || undefined, [myRoomQuery.data])
 
-  if (complaintsQuery.isLoading || roomsQuery.isLoading) {
+  if (complaintsQuery.isLoading || myRoomQuery.isLoading) {
     return (
       <div style={{ display: 'grid', gap: 24 }}>
         <StatsGridSkeleton />

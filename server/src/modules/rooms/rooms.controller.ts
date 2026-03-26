@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -41,6 +42,11 @@ export class RoomsController {
   @Roles('ADMIN', 'WARDEN')
   getStats() {
     return this.roomsService.getStats();
+  }
+
+  @Get('my')
+  findMyRoom(@Req() req: { user: { id: string } }) {
+    return this.roomsService.findMyRoom(req.user.id);
   }
 
   @Get(':id')

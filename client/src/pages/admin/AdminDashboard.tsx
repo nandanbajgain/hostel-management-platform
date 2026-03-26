@@ -46,11 +46,6 @@ export default function AdminDashboard() {
     refetchInterval: 30000,
   })
 
-  const { data: recentComplaints } = useQuery({
-    queryKey: ['recent-complaints'],
-    queryFn: () => api.get('/complaints').then((r) => r.data),
-  })
-
   if (isLoading) {
     return (
       <div style={{ display: 'grid', gap: 24 }}>
@@ -145,7 +140,7 @@ export default function AdminDashboard() {
           Recent Complaints
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {(recentComplaints || []).slice(0, 8).map((complaint: any) => (
+          {(stats?.recentActivity || []).slice(0, 8).map((complaint: any) => (
             <div key={complaint.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border-default)' }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 500 }}>{complaint.title}</div>

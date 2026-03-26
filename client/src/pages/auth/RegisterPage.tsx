@@ -385,6 +385,12 @@ export default function RegisterPage() {
                       <option value="FEMALE">Female</option>
                       <option value="OTHER">Other</option>
                     </select>
+                    <style>{`
+                      select option {
+                        color: #0f172a;
+                        background: #ffffff;
+                      }
+                    `}</style>
                     {errors.gender ? (
                       <p style={{ color: 'var(--accent-danger)', fontSize: 12, marginTop: 5 }}>
                         {errors.gender.message}
