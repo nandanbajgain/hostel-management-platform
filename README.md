@@ -9,7 +9,7 @@ For the recommended production deployment stack:
 - Neon for PostgreSQL
 - Upstash for Redis
 
-use [HOSTING.md](/c:/Users/amarr/OneDrive/Desktop/smarthack/HM/hostel-platform/HOSTING.md).
+use [HOSTING.md]().
 
 Full-stack hostel management monorepo with:
 
@@ -366,7 +366,7 @@ If login fails, check:
 
 ### Chatbot
 
-- chatbot uses Claude
+- chatbot uses LLM
 - it uses basic intent classification
 - it reads live room/complaint data where relevant
 - it falls back to keyword search in the knowledge base
@@ -421,7 +421,7 @@ Likely causes:
 
 Likely causes:
 
-- missing `ANTHROPIC_API_KEY`
+- missing `LLM_API_KEY`
 
 ## Current Status
 
