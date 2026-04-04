@@ -1,12 +1,14 @@
 import { QueryClient } from '@tanstack/react-query'
+import axios from 'axios'
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5,
-      retry: (failureCount, error: any) => {
-        if (error?.response?.status && error.response.status < 500) {
-          return false
+      retry: (failureCount, error: unknown) => {
+        if (axios.isAxiosError(error)) {
+          const status = error.response?.status
+          if (typeof status === 'number' && status < 500) return false
         }
 
         return failureCount < 3

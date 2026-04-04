@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { AlertCircle, PlusCircle } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
 import ComplaintForm from '@/components/complaints/ComplaintForm'
 import StatusBadge from '@/components/shared/StatusBadge'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
@@ -8,15 +9,31 @@ import EmptyState from '@/components/shared/EmptyState'
 import StatusTracker from '@/components/complaints/StatusTracker'
 import api from '@/services/api'
 import type { Complaint } from '@/types'
+import CardListSkeleton from '@/components/shared/CardListSkeleton'
 
 export default function ComplaintsPage() {
-  const [openForm, setOpenForm] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [openForm, setOpenForm] = useState(() => searchParams.get('new') === '1')
+
+  useEffect(() => {
+    if (searchParams.get('new') !== '1') return
+    const next = new URLSearchParams(searchParams)
+    next.delete('new')
+    setSearchParams(next, { replace: true })
+  }, [searchParams, setSearchParams])
   const complaintsQuery = useQuery({
     queryKey: ['complaints-mine'],
     queryFn: () => api.get('/complaints/mine').then((res) => res.data as Complaint[]),
   })
 
-  if (complaintsQuery.isLoading) return <LoadingSpinner />
+  if (complaintsQuery.isLoading) {
+    return (
+      <div style={{ display: 'grid', gap: 16 }}>
+        <LoadingSpinner />
+        <CardListSkeleton rows={3} height={160} />
+      </div>
+    )
+  }
 
   const complaints = complaintsQuery.data || []
 
@@ -92,7 +109,7 @@ export default function ComplaintsPage() {
                   {complaint.adminNote}
                 </div>
               ) : null}
-              <div style={{ marginTop: 16 }}>
+              <div className="card" style={{ marginTop: 16, padding: '1.25rem' }}>
                 <StatusTracker status={complaint.status} />
               </div>
             </div>

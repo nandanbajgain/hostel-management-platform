@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'react-hot-toast'
@@ -40,30 +40,18 @@ function ProtectedRoute({
 }
 
 function useAuthHydrationReady() {
-  const [ready, setReady] = useState(() =>
-    useAuthStore.persist.hasHydrated()
+  return useSyncExternalStore(
+    (callback) => {
+      const unsubHydrate = useAuthStore.persist.onHydrate(callback)
+      const unsubFinish = useAuthStore.persist.onFinishHydration(callback)
+      return () => {
+        unsubHydrate()
+        unsubFinish()
+      }
+    },
+    () => useAuthStore.persist.hasHydrated(),
+    () => true
   )
-
-  useEffect(() => {
-    const unsubHydrate = useAuthStore.persist.onHydrate(() => setReady(false))
-    const unsubFinish = useAuthStore.persist.onFinishHydration(() =>
-      setReady(true)
-    )
-
-    setReady(useAuthStore.persist.hasHydrated())
-
-    const timer = window.setTimeout(() => {
-      setReady(true)
-    }, 2500)
-
-    return () => {
-      window.clearTimeout(timer)
-      unsubHydrate()
-      unsubFinish()
-    }
-  }, [])
-
-  return ready
 }
 
 export default function App() {

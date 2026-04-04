@@ -1,12 +1,13 @@
 import StatusBadge from '@/components/shared/StatusBadge'
+import type { ComplaintStatus } from '@/types'
 
 const order = ['PENDING', 'UNDER_REVIEW', 'IN_PROGRESS', 'RESOLVED']
 
-export default function StatusTracker({ status }: { status: string }) {
+export default function StatusTracker({ status }: { status: ComplaintStatus }) {
   const currentIndex = order.indexOf(status)
 
   return (
-    <div className="card" style={{ padding: '1.25rem' }}>
+    <div style={{ padding: '0.25rem 0.25rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <h3 style={{ fontFamily: 'Sora', fontSize: 15, margin: 0 }}>Progress</h3>
         <StatusBadge status={status} />

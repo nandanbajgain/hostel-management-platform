@@ -14,6 +14,7 @@ import {
 import toast from 'react-hot-toast'
 import api from '@/services/api'
 import sauLogo from '@/assets/sau-logo.png'
+import { getErrorMessage } from '@/lib/errors'
 
 const sportsOptions = [
   'Football',
@@ -87,8 +88,8 @@ export default function RegisterPage() {
         'Registration submitted. Wait for admin or warden approval before signing in.'
       )
       navigate('/login')
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Registration failed')
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Registration failed'))
     }
   }
 
@@ -103,8 +104,8 @@ export default function RegisterPage() {
       })
       setValue('avatarUrl', res.data.url, { shouldValidate: true })
       toast.success('Student photo uploaded')
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Image upload failed')
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Image upload failed'))
     } finally {
       setUploading(false)
     }

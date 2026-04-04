@@ -6,11 +6,12 @@ import StatsGrid from '@/components/dashboard/StatsGrid'
 import ActivityFeed from '@/components/dashboard/ActivityFeed'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import StatsGridSkeleton from '@/components/shared/StatsGridSkeleton'
+import type { AdminDashboardStats } from '@/types'
 
 export default function WardenDashboard() {
   const dashboardQuery = useQuery({
     queryKey: ['warden-dashboard'],
-    queryFn: () => api.get('/dashboard/admin-stats').then((res) => res.data),
+    queryFn: () => api.get('/dashboard/admin-stats').then((res) => res.data as AdminDashboardStats),
   })
 
   if (dashboardQuery.isLoading) {
@@ -68,7 +69,7 @@ export default function WardenDashboard() {
 
       <ActivityFeed
         title="Recent Resident Issues"
-        items={(stats?.recentActivity || []).slice(0, 6).map((item: any) => ({
+        items={(stats?.recentActivity || []).slice(0, 6).map((item) => ({
           id: item.id,
           title: item.title,
           subtitle: `${item.isAnonymous ? 'Anonymous' : item.user?.name || 'Student'} · ${item.category}`,

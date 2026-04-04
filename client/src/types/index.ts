@@ -47,6 +47,7 @@ export interface Complaint {
   status: ComplaintStatus
   adminNote?: string
   createdAt: string
+  updatedAt?: string
   resolvedAt?: string
   user?: Pick<User, 'id' | 'name' | 'email'>
 }
@@ -67,6 +68,19 @@ export interface DashboardStats {
   openComplaints: number
   pendingMaintenance: number
   occupancyPercent: number
+}
+
+export interface AdminDashboardStats extends DashboardStats {
+  totalRooms: number
+  recentActivity: Array<{
+    id: string
+    title: string
+    category: ComplaintCategory
+    status: ComplaintStatus
+    createdAt: string
+    isAnonymous: boolean
+    user: { name: string } | null
+  }>
 }
 
 export interface MaintenanceTask {

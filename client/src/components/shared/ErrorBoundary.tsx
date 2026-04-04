@@ -15,7 +15,9 @@ export default class ErrorBoundary extends Component<Props, State> {
     return { hasError: true }
   }
 
-  componentDidCatch(_error: Error, _errorInfo: ErrorInfo) {}
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Uncaught error:', error, errorInfo)
+  }
 
   render() {
     if (this.state.hasError) {
@@ -37,6 +39,13 @@ export default class ErrorBoundary extends Component<Props, State> {
               The app hit an unexpected error while loading data. Refresh the page and
               check that the backend is running.
             </p>
+            <button
+              className="btn-primary"
+              style={{ marginTop: 16 }}
+              onClick={() => window.location.reload()}
+            >
+              Reload
+            </button>
           </div>
         </div>
       )

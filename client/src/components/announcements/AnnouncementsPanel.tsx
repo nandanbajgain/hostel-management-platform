@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import api from '@/services/api'
 import { useAuthStore } from '@/store/authStore'
 import type { Announcement } from '@/types'
+import { getErrorMessage } from '@/lib/errors'
 
 export default function AnnouncementsPanel() {
   const { user } = useAuthStore()
@@ -27,8 +28,8 @@ export default function AnnouncementsPanel() {
       setIsUrgent(false)
       await announcementsQuery.refetch()
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Could not post announcement')
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, 'Could not post announcement'))
     },
   })
 

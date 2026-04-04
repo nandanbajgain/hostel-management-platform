@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import api from '@/services/api'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import StatusBadge from '@/components/shared/StatusBadge'
+import { getErrorMessage } from '@/lib/errors'
 
 type Student = {
   id: string
@@ -80,15 +81,11 @@ export default function StudentManagement() {
       await queryClient.invalidateQueries({ queryKey: ['students'] })
       await queryClient.invalidateQueries({ queryKey: ['roommate-suggestions'] })
     },
-    onError: (error: any, _vars, context) => {
+    onError: (error: unknown, _vars, context) => {
       if (context?.previous) {
         queryClient.setQueryData(context.key, context.previous)
       }
-      const msg =
-        error.response?.data?.message ||
-        error.message ||
-        'Could not update student'
-      toast.error(msg)
+      toast.error(getErrorMessage(error, 'Could not update student'))
     },
   })
 

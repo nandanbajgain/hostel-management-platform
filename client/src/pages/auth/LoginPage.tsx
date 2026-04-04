@@ -14,6 +14,7 @@ import {
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/store/authStore'
 import sauLogo from '@/assets/sau-logo.png'
+import { getErrorMessage } from '@/lib/errors'
 
 const schema = z.object({
   email: z.string().email('Invalid email'),
@@ -51,8 +52,8 @@ export default function LoginPage() {
     try {
       await login(data.email, data.password)
       navigate('/dashboard')
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'Invalid credentials'
+    } catch (err: unknown) {
+      const msg = getErrorMessage(err, 'Invalid credentials')
       setError('password', { message: msg })
       toast.error(msg)
     } finally {

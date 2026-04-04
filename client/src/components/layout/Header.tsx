@@ -1,11 +1,32 @@
-import { Bell, CalendarDays, Search, Sparkles } from 'lucide-react'
+import { Bell, CalendarDays, Command, Menu, Sparkles } from 'lucide-react'
 import { format } from 'date-fns'
+import { useEffect, useState } from 'react'
 import { useAuthStore } from '@/store/authStore'
 import { useNotificationStore } from '@/store/notificationStore'
+import CommandPalette from './CommandPalette'
+import NotificationsDrawer from './NotificationsDrawer'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useUIStore } from '@/store/uiStore'
 
 export default function Header() {
   const { user } = useAuthStore()
-  const { unreadCount } = useNotificationStore()
+  const { unreadCount, markAllRead } = useNotificationStore()
+  const [paletteOpen, setPaletteOpen] = useState(false)
+  const [notifsOpen, setNotifsOpen] = useState(false)
+  const isMobile = useMediaQuery('(max-width: 900px)')
+  const { setMobileSidebarOpen } = useUIStore()
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const isK = event.key.toLowerCase() === 'k'
+      if ((event.ctrlKey || event.metaKey) && isK) {
+        event.preventDefault()
+        setPaletteOpen(true)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
 
   return (
     <header
@@ -27,7 +48,27 @@ export default function Header() {
           gap: 16,
         }}
       >
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {isMobile ? (
+            <button
+              onClick={() => setMobileSidebarOpen(true)}
+              aria-label="Open menu"
+              className="card-glass"
+              style={{
+                width: 42,
+                height: 42,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 12,
+                cursor: 'pointer',
+              }}
+            >
+              <Menu size={18} color="var(--text-primary)" />
+            </button>
+          ) : null}
+
+          <div>
           <div
             style={{
               display: 'flex',
@@ -46,9 +87,10 @@ export default function Header() {
           <h2 style={{ fontFamily: 'Sora', fontSize: 20, margin: 0 }}>
             {user ? `Welcome, ${user.name.split(' ')[0]}` : 'Hostel Portal'}
           </h2>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <div
             className="card-glass"
             style={{
@@ -57,12 +99,33 @@ export default function Header() {
               alignItems: 'center',
               gap: 10,
               minWidth: 220,
+              cursor: 'pointer',
+            }}
+            role="button"
+            tabIndex={0}
+            onClick={() => setPaletteOpen(true)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') setPaletteOpen(true)
             }}
           >
-            <Search size={16} color="var(--text-tertiary)" />
+            <Command size={16} color="var(--text-tertiary)" />
             <span style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>
-              Search rooms, complaints, rules
+              Search pages and actions
             </span>
+            {!isMobile ? (
+              <span
+              style={{
+                marginLeft: 'auto',
+                fontSize: 11,
+                color: 'var(--text-tertiary)',
+                padding: '3px 8px',
+                border: '1px solid var(--border-default)',
+                borderRadius: 999,
+              }}
+            >
+              Ctrl K
+              </span>
+            ) : null}
           </div>
 
           <div className="card-glass" style={{ padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -73,8 +136,13 @@ export default function Header() {
           </div>
 
           <div style={{ position: 'relative' }}>
-            <div
+            <button
               className="card-glass"
+              onClick={() => {
+                setNotifsOpen(true)
+                markAllRead()
+              }}
+              aria-label="Open notifications"
               style={{
                 width: 42,
                 height: 42,
@@ -82,10 +150,11 @@ export default function Header() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: 12,
+                cursor: 'pointer',
               }}
             >
               <Bell size={18} color="var(--text-primary)" />
-            </div>
+            </button>
             {unreadCount > 0 ? (
               <span
                 style={{
@@ -110,6 +179,17 @@ export default function Header() {
           </div>
         </div>
       </div>
+
+      {paletteOpen ? (
+        <CommandPalette
+          open
+          onClose={() => setPaletteOpen(false)}
+          onOpenNotifications={() => setNotifsOpen(true)}
+        />
+      ) : null}
+      {notifsOpen ? (
+        <NotificationsDrawer open onClose={() => setNotifsOpen(false)} />
+      ) : null}
     </header>
   )
 }

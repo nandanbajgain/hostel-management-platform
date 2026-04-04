@@ -6,9 +6,11 @@ import toast from 'react-hot-toast'
 import EmptyState from '@/components/shared/EmptyState'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import StatusBadge from '@/components/shared/StatusBadge'
+import CardListSkeleton from '@/components/shared/CardListSkeleton'
 import api from '@/services/api'
 import { useAuthStore } from '@/store/authStore'
 import type { MaintenanceStatus, MaintenanceTask } from '@/types'
+import { getErrorMessage } from '@/lib/errors'
 
 export default function MaintenanceAdmin() {
   const { user } = useAuthStore()
@@ -31,8 +33,8 @@ export default function MaintenanceAdmin() {
       setLocation('')
       await maintenanceQuery.refetch()
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Could not submit maintenance request')
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, 'Could not submit maintenance request'))
     },
   })
 
@@ -48,12 +50,19 @@ export default function MaintenanceAdmin() {
       toast.success('Maintenance status updated')
       await maintenanceQuery.refetch()
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Could not update status')
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, 'Could not update status'))
     },
   })
 
-  if (maintenanceQuery.isLoading) return <LoadingSpinner />
+  if (maintenanceQuery.isLoading) {
+    return (
+      <div style={{ display: 'grid', gap: 16 }}>
+        <LoadingSpinner />
+        <CardListSkeleton rows={4} height={150} />
+      </div>
+    )
+  }
 
   const tasks = maintenanceQuery.data || []
 

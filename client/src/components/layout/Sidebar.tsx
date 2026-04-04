@@ -1,60 +1,34 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import {
-  AlertCircle,
-  BedDouble,
-  ChevronLeft,
-  EyeOff,
-  Home,
-  LayoutDashboard,
-  LogOut,
-  Search,
-  UserCheck,
-  Wrench,
-} from 'lucide-react'
+import { ChevronLeft, LogOut } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import sauLogo from '@/assets/sau-logo.png'
-
-const studentNav = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/my-room', icon: Home, label: 'My Room' },
-  { to: '/complaints', icon: AlertCircle, label: 'My Complaints' },
-  { to: '/complaints/anonymous', icon: EyeOff, label: 'Report Anonymously' },
-  { to: '/maintenance', icon: Wrench, label: 'Maintenance' },
-  { to: '/track', icon: Search, label: 'Track Complaint' },
-]
-
-const adminNav = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/rooms', icon: BedDouble, label: 'Room Management' },
-  { to: '/admin/complaints', icon: AlertCircle, label: 'Complaints' },
-  { to: '/students', icon: UserCheck, label: 'Students' },
-  { to: '/maintenance', icon: Wrench, label: 'Maintenance' },
-]
-
-const wardenNav = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/rooms', icon: BedDouble, label: 'Rooms' },
-  { to: '/admin/complaints', icon: AlertCircle, label: 'Complaints' },
-  { to: '/students', icon: UserCheck, label: 'Students' },
-  { to: '/maintenance', icon: Wrench, label: 'Maintenance' },
-]
+import { getNavItems } from '@/lib/nav'
 
 export default function Sidebar({
   collapsed,
   onToggle,
+  mobileOpen = true,
+  isMobile = false,
+  onCloseMobile,
 }: {
   collapsed: boolean
   onToggle: () => void
+  mobileOpen?: boolean
+  isMobile?: boolean
+  onCloseMobile?: () => void
 }) {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
-  const navItems =
-    user?.role === 'ADMIN' ? adminNav : user?.role === 'WARDEN' ? wardenNav : studentNav
+  const navItems = getNavItems(user?.role)
 
   return (
     <motion.aside
-      animate={{ width: collapsed ? 64 : 240 }}
+      animate={
+        isMobile
+          ? { x: mobileOpen ? 0 : -260, width: 240 }
+          : { width: collapsed ? 64 : 240, x: 0 }
+      }
       transition={{ duration: 0.3, ease: 'easeInOut' }}
       style={{
         position: 'fixed',
@@ -127,6 +101,9 @@ export default function Sidebar({
           <NavLink
             key={to}
             to={to}
+            onClick={() => {
+              if (isMobile) onCloseMobile?.()
+            }}
             style={({ isActive }) => ({
               display: 'flex',
               alignItems: 'center',
@@ -222,6 +199,7 @@ export default function Sidebar({
         </button>
         <button
           onClick={onToggle}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           style={{
             width: '100%',
             display: 'flex',

@@ -19,6 +19,7 @@ import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import StatsGridSkeleton from '@/components/shared/StatsGridSkeleton'
 import StatusBadge from '@/components/shared/StatusBadge'
 import StatsGrid from '@/components/dashboard/StatsGrid'
+import type { AdminDashboardStats } from '@/types'
 
 const weekData = [
   { day: 'Mon', complaints: 3, resolved: 2 },
@@ -42,7 +43,7 @@ const categoryData = [
 export default function AdminDashboard() {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['dashboard-stats'],
-    queryFn: () => api.get('/dashboard/admin-stats').then((r) => r.data),
+    queryFn: () => api.get('/dashboard/admin-stats').then((r) => r.data as AdminDashboardStats),
     refetchInterval: 30000,
   })
 
@@ -84,8 +85,8 @@ export default function AdminDashboard() {
             icon: AlertCircle,
             label: 'Open Complaints',
             value: stats?.openComplaints ?? 0,
-            sub: stats?.openComplaints > 10 ? 'Needs attention' : 'Under control',
-            color: stats?.openComplaints > 10 ? '#EF4444' : '#10B981',
+            sub: (stats?.openComplaints ?? 0) > 10 ? 'Needs attention' : 'Under control',
+            color: (stats?.openComplaints ?? 0) > 10 ? '#EF4444' : '#10B981',
           },
           {
             icon: Wrench,
@@ -140,7 +141,7 @@ export default function AdminDashboard() {
           Recent Complaints
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {(stats?.recentActivity || []).slice(0, 8).map((complaint: any) => (
+          {(stats?.recentActivity || []).slice(0, 8).map((complaint) => (
             <div key={complaint.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border-default)' }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 500 }}>{complaint.title}</div>

@@ -4,8 +4,11 @@ import toast from 'react-hot-toast'
 import api from '@/services/api'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import StatusBadge from '@/components/shared/StatusBadge'
+import type { Complaint, ComplaintStatus } from '@/types'
+import { getErrorMessage } from '@/lib/errors'
+import CardListSkeleton from '@/components/shared/CardListSkeleton'
 
-const statuses = ['PENDING', 'UNDER_REVIEW', 'IN_PROGRESS', 'RESOLVED', 'REJECTED']
+const statuses: ComplaintStatus[] = ['PENDING', 'UNDER_REVIEW', 'IN_PROGRESS', 'RESOLVED', 'REJECTED']
 
 export default function ComplaintsAdmin() {
   const [filter, setFilter] = useState('')
@@ -15,20 +18,27 @@ export default function ComplaintsAdmin() {
     queryFn: () =>
       api
         .get('/complaints', { params: filter ? { status: filter } : undefined })
-        .then((res) => res.data as any[]),
+        .then((res) => res.data as Complaint[]),
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, status, adminNote }: { id: string; status: string; adminNote?: string }) =>
+    mutationFn: ({ id, status, adminNote }: { id: string; status: ComplaintStatus; adminNote?: string }) =>
       api.patch(`/complaints/${id}/status`, { status, adminNote }),
     onSuccess: () => {
       toast.success('Complaint updated')
       complaintsQuery.refetch()
     },
-    onError: () => toast.error('Could not update complaint'),
+    onError: (error: unknown) => toast.error(getErrorMessage(error, 'Could not update complaint')),
   })
 
-  if (complaintsQuery.isLoading) return <LoadingSpinner />
+  if (complaintsQuery.isLoading) {
+    return (
+      <div style={{ display: 'grid', gap: 16 }}>
+        <LoadingSpinner />
+        <CardListSkeleton rows={4} height={160} />
+      </div>
+    )
+  }
 
   return (
     <div style={{ display: 'grid', gap: 20 }}>
@@ -81,7 +91,7 @@ export default function ComplaintsAdmin() {
                 onChange={(e) =>
                   updateMutation.mutate({
                     id: complaint.id,
-                    status: e.target.value,
+                    status: e.target.value as ComplaintStatus,
                     adminNote: notes[complaint.id],
                   })
                 }

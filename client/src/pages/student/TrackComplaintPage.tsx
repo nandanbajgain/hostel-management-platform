@@ -1,22 +1,56 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Search } from 'lucide-react'
+import { Copy, Link2, Search } from 'lucide-react'
+import toast from 'react-hot-toast'
 import api from '@/services/api'
 import StatusBadge from '@/components/shared/StatusBadge'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import StatusTracker from '@/components/complaints/StatusTracker'
+import { copyToClipboard } from '@/lib/clipboard'
+import type { ComplaintCategory, ComplaintStatus } from '@/types'
+import { getErrorMessage } from '@/lib/errors'
+import { useSearchParams } from 'react-router-dom'
+
+type TrackedComplaint = {
+  token: string
+  category: ComplaintCategory
+  title: string
+  description?: string
+  status: ComplaintStatus
+  adminNote?: string
+  createdAt: string
+  updatedAt?: string
+  resolvedAt?: string
+}
 
 export default function TrackComplaintPage() {
-  const [token, setToken] = useState('')
-  const [submittedToken, setSubmittedToken] = useState('')
+  const inputRef = useRef<HTMLInputElement | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const urlToken = useMemo(() => (searchParams.get('token') || '').trim().toUpperCase(), [searchParams])
+  const [token, setToken] = useState(() => urlToken || localStorage.getItem('lastComplaintToken') || '')
+  const [submittedToken, setSubmittedToken] = useState(() => urlToken)
+
+  const normalizedToken = useMemo(() => submittedToken.trim().toUpperCase(), [submittedToken])
 
   const trackQuery = useQuery({
-    queryKey: ['track-complaint', submittedToken],
+    queryKey: ['track-complaint', normalizedToken],
     queryFn: () =>
-      api.get(`/complaints/track/${submittedToken}`).then((res) => res.data as any),
-    enabled: !!submittedToken,
+      api.get(`/complaints/track/${normalizedToken}`).then((res) => res.data as TrackedComplaint),
+    enabled: !!normalizedToken,
     retry: false,
   })
+
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [])
+
+  useEffect(() => {
+    if (!urlToken) return
+    localStorage.setItem('lastComplaintToken', urlToken)
+    const updated = new URLSearchParams(searchParams)
+    updated.delete('token')
+    setSearchParams(updated, { replace: true })
+  }, [searchParams, setSearchParams, urlToken])
 
   return (
     <div
@@ -36,8 +70,18 @@ export default function TrackComplaintPage() {
           </p>
           <div style={{ display: 'flex', gap: 10 }}>
             <input
+              ref={inputRef}
               value={token}
               onChange={(e) => setToken(e.target.value.toUpperCase())}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  const next = token.trim().toUpperCase()
+                  if (!next) return
+                  localStorage.setItem('lastComplaintToken', next)
+                  setSubmittedToken(next)
+                }
+              }}
               placeholder="Enter complaint token"
               style={{
                 flex: 1,
@@ -50,7 +94,12 @@ export default function TrackComplaintPage() {
             />
             <button
               className="btn-primary"
-              onClick={() => setSubmittedToken(token.trim())}
+              onClick={() => {
+                const next = token.trim().toUpperCase()
+                if (!next) return
+                localStorage.setItem('lastComplaintToken', next)
+                setSubmittedToken(next)
+              }}
               disabled={!token.trim()}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
             >
@@ -63,7 +112,7 @@ export default function TrackComplaintPage() {
         {trackQuery.isFetching ? <LoadingSpinner /> : null}
         {trackQuery.isError ? (
           <div className="card" style={{ color: 'var(--accent-danger)' }}>
-            Complaint not found. Check the token and try again.
+            {getErrorMessage(trackQuery.error, 'Complaint not found. Check the token and try again.')}
           </div>
         ) : null}
 
@@ -78,7 +127,53 @@ export default function TrackComplaintPage() {
               </div>
               <StatusBadge status={trackQuery.data.status} />
             </div>
-            {'description' in trackQuery.data ? (
+
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 14 }}>
+              <button
+                onClick={async () => {
+                  const ok = await copyToClipboard(trackQuery.data!.token)
+                  toast.success(ok ? 'Copied token' : 'Could not copy token')
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '8px 12px',
+                  borderRadius: 999,
+                  border: '1px solid var(--border-default)',
+                  background: 'var(--bg-tertiary)',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                }}
+              >
+                <Copy size={14} />
+                Copy token
+              </button>
+              <button
+                onClick={async () => {
+                  const url = `${window.location.origin}/track?token=${encodeURIComponent(trackQuery.data!.token)}`
+                  const ok = await copyToClipboard(url)
+                  toast.success(ok ? 'Copied link' : 'Could not copy link')
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '8px 12px',
+                  borderRadius: 999,
+                  border: '1px solid var(--border-default)',
+                  background: 'var(--bg-tertiary)',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                }}
+              >
+                <Link2 size={14} />
+                Share link
+              </button>
+            </div>
+            {trackQuery.data.description ? (
               <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, marginTop: 16 }}>
                 {trackQuery.data.description}
               </p>
@@ -97,7 +192,7 @@ export default function TrackComplaintPage() {
                 {trackQuery.data.adminNote}
               </div>
             ) : null}
-            <div style={{ marginTop: 18 }}>
+            <div className="card" style={{ marginTop: 18, padding: '1.25rem' }}>
               <StatusTracker status={trackQuery.data.status} />
             </div>
           </div>

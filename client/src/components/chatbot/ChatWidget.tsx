@@ -6,10 +6,9 @@ import { useChatStore } from '@/store/chatStore'
 import ChatWindow from './ChatWindow'
 
 export default function ChatWidget() {
-  const [open, setOpen] = useState(false)
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const { messages, addMessage } = useChatStore()
+  const { messages, addMessage, isOpen, setOpen } = useChatStore()
 
   const quickReplies = [
     'My room info',
@@ -58,7 +57,7 @@ export default function ChatWidget() {
   return (
     <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 100 }}>
       <AnimatePresence>
-        {open ? (
+        {isOpen ? (
           <motion.div
             initial={{ opacity: 0, y: 16, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -176,7 +175,7 @@ export default function ChatWidget() {
       </AnimatePresence>
 
       <motion.button
-        onClick={() => setOpen((state) => !state)}
+        onClick={() => setOpen(!isOpen)}
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.95 }}
         style={{
@@ -194,13 +193,13 @@ export default function ChatWidget() {
       >
         <AnimatePresence mode="wait">
           <motion.div
-            key={open ? 'x' : 'chat'}
+            key={isOpen ? 'x' : 'chat'}
             initial={{ rotate: -90, opacity: 0 }}
             animate={{ rotate: 0, opacity: 1 }}
             exit={{ rotate: 90, opacity: 0 }}
             transition={{ duration: 0.15 }}
           >
-            {open ? <X size={22} color="white" /> : <MessageCircle size={22} color="white" />}
+            {isOpen ? <X size={22} color="white" /> : <MessageCircle size={22} color="white" />}
           </motion.div>
         </AnimatePresence>
       </motion.button>

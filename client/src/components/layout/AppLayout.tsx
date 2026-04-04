@@ -1,13 +1,16 @@
 import { Outlet } from 'react-router-dom'
-import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import { useSocket } from '@/hooks/useSocket'
 import ChatWidget from '@/components/chatbot/ChatWidget'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useUIStore } from '@/store/uiStore'
 
 export default function AppLayout() {
-  const [collapsed, setCollapsed] = useState(false)
+  const isMobile = useMediaQuery('(max-width: 900px)')
+  const { sidebarCollapsed, toggleSidebarCollapsed, mobileSidebarOpen, setMobileSidebarOpen } =
+    useUIStore()
   useSocket()
 
   return (
@@ -19,21 +22,35 @@ export default function AppLayout() {
       }}
     >
       <Sidebar
-        collapsed={collapsed}
-        onToggle={() => setCollapsed((current) => !current)}
+        collapsed={sidebarCollapsed}
+        onToggle={toggleSidebarCollapsed}
+        isMobile={isMobile}
+        mobileOpen={isMobile ? mobileSidebarOpen : true}
+        onCloseMobile={() => setMobileSidebarOpen(false)}
       />
+      {isMobile && mobileSidebarOpen ? (
+        <div
+          onClick={() => setMobileSidebarOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 40,
+            background: 'rgba(0,0,0,0.35)',
+          }}
+        />
+      ) : null}
       <div
         style={{
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          marginLeft: collapsed ? 64 : 240,
+          marginLeft: isMobile ? 0 : sidebarCollapsed ? 64 : 240,
           transition: 'margin 0.3s ease',
         }}
       >
         <Header />
-        <main style={{ flex: 1, padding: '1.5rem 2rem', overflowY: 'auto' }}>
+        <main style={{ flex: 1, padding: isMobile ? '1rem' : '1.5rem 2rem', overflowY: 'auto' }}>
           <AnimatePresence mode="wait">
             <motion.div
               initial={{ opacity: 0, y: 8 }}

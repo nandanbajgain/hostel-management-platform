@@ -5,6 +5,8 @@ import { z } from 'zod'
 import toast from 'react-hot-toast'
 import api from '@/services/api'
 import ImageUploadZone from './ImageUploadZone'
+import { copyToClipboard } from '@/lib/clipboard'
+import { getErrorMessage } from '@/lib/errors'
 
 const schema = z.object({
   category: z.string().min(1, 'Select a category'),
@@ -29,12 +31,13 @@ export default function ComplaintForm({
   onSuccess,
   anonymous = false,
 }: {
-  onSuccess?: (payload: unknown) => void
+  onSuccess?: (payload: { token: string }) => void
   anonymous?: boolean
 }) {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [submittedToken, setSubmittedToken] = useState<string | null>(null)
   const {
     register,
     handleSubmit,
@@ -58,9 +61,12 @@ export default function ComplaintForm({
       const endpoint = anonymous ? '/complaints/anonymous' : '/complaints'
       const res = await api.post(endpoint, { ...values, imageUrl })
       toast.success(anonymous ? 'Anonymous complaint submitted' : 'Complaint submitted')
-      onSuccess?.(res.data)
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Submission failed')
+
+      const token = typeof res.data?.token === 'string' ? res.data.token : ''
+      if (token) setSubmittedToken(token)
+      onSuccess?.({ token })
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Submission failed'))
     } finally {
       setLoading(false)
     }
@@ -68,6 +74,38 @@ export default function ComplaintForm({
 
   return (
     <form onSubmit={handleSubmit(submit)} style={{ display: 'grid', gap: 16 }}>
+      {submittedToken ? (
+        <div
+          style={{
+            padding: '0.9rem 1rem',
+            borderRadius: 12,
+            background: 'rgba(16,185,129,0.08)',
+            border: '1px solid rgba(16,185,129,0.22)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            flexWrap: 'wrap',
+          }}
+        >
+          <div>
+            <div style={{ fontWeight: 800, color: 'var(--accent-success)' }}>Token</div>
+            <div style={{ marginTop: 4, fontFamily: 'JetBrains Mono', fontSize: 13 }}>
+              {submittedToken}
+            </div>
+          </div>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={async () => {
+              const ok = await copyToClipboard(submittedToken)
+              toast.success(ok ? 'Copied token' : 'Could not copy token')
+            }}
+          >
+            Copy token
+          </button>
+        </div>
+      ) : null}
       <div>
         <label style={{ display: 'block', fontSize: 13, marginBottom: 6, color: 'var(--text-secondary)' }}>
           Category
