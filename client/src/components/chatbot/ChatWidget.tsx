@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Bot, MessageCircle, X } from 'lucide-react'
-import api from '@/services/api'
+import { useAuth } from '@/hooks/useAuth'
 import { useChatStore } from '@/store/chatStore'
 import ChatWindow from './ChatWindow'
 
 export default function ChatWidget() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const { messages, addMessage, isOpen, setOpen } = useChatStore()
+  const { isStudent } = useAuth()
+  const { messages, addMessage, updateMessage, isOpen, setOpen } = useChatStore()
 
   const quickReplies = [
     'My room info',
@@ -16,6 +17,8 @@ export default function ChatWidget() {
     'Hostel rules',
     'How to file complaint',
   ]
+
+  if (!isStudent) return null
 
   const send = async (text: string) => {
     if (!text.trim() || loading) return
@@ -30,24 +33,74 @@ export default function ChatWidget() {
     setInput('')
     setLoading(true)
 
+    const botId = `${Date.now()}_bot`
+    addMessage({
+      id: botId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+      sources: [],
+    })
+
     try {
       const history = [...messages, userMsg]
         .slice(-6)
         .map((message) => ({ role: message.role, content: message.content }))
-      const res = await api.post('/chatbot/message', { message: text, history })
-      addMessage({
-        id: `${Date.now()}_bot`,
-        role: 'assistant',
-        content: res.data.message,
-        timestamp: new Date(),
+
+      const token = localStorage.getItem('accessToken')
+      const apiUrl = import.meta.env.VITE_API_URL + '/api/v1/chatbot/message/stream'
+
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ message: text, history }),
       })
+
+      if (!res.ok || !res.body) {
+        const msg = await res.text().catch(() => '')
+        throw new Error(msg || `Request failed (${res.status})`)
+      }
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let content = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+
+        for (const rawLine of lines) {
+          const line = rawLine.trim()
+          if (!line) continue
+          try {
+            const event = JSON.parse(line) as
+              | { type: 'meta'; sources?: any[] }
+              | { type: 'delta'; text?: string }
+              | { type: 'done' }
+
+            if (event.type === 'meta') {
+              updateMessage(botId, { sources: event.sources || [] })
+            } else if (event.type === 'delta') {
+              content += event.text || ''
+              updateMessage(botId, { content })
+            } else if (event.type === 'done') {
+              // no-op
+            }
+          } catch {
+            // ignore malformed lines
+          }
+        }
+      }
     } catch {
-      addMessage({
-        id: `${Date.now()}_err`,
-        role: 'assistant',
-        content:
-          'Sorry, I could not process that. Please try again or contact the warden.',
-        timestamp: new Date(),
+      updateMessage(botId, {
+        content: 'Sorry, I could not process that. Please try again or contact the warden.',
       })
     } finally {
       setLoading(false)

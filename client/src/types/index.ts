@@ -110,4 +110,10 @@ export interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
+  sources?: Array<{
+    id: string
+    title: string | null
+    type: string | null
+    score: number
+  }>
 }

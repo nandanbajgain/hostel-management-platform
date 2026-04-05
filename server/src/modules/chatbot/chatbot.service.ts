@@ -8,6 +8,14 @@ interface ChatMessage {
 
 type IntentType = 'LIVE_DATA' | 'HOSTEL_FAQ' | 'COMPLAINT_ACTION' | 'GENERAL';
 
+type RagSource = {
+  id: string;
+  title: string | null;
+  type: string | null;
+  score: number;
+  createdAt: Date;
+};
+
 type KnowledgeBaseEntry = {
   id: string;
   content: string;
@@ -22,6 +30,7 @@ export class ChatbotService {
 
   private embeddingModelCache: string | null = null;
   private chatModelCache: string | null = null;
+  private defaultsEnsured = false;
 
   async chat(message: string, userId: string, history: ChatMessage[] = []) {
     const apiKey = process.env.GEMINI_API_KEY?.trim();
@@ -33,11 +42,17 @@ export class ChatbotService {
 
     const intent = this.classifyIntent(message);
     let contextData = '';
+    let sources: RagSource[] = [];
+    let ragTopScore: number | null = null;
 
     if (intent === 'LIVE_DATA') {
       contextData = await this.getLiveData(userId);
     } else if (intent === 'HOSTEL_FAQ' || intent === 'GENERAL') {
-      contextData = await this.getRagContext(message);
+      await this.ensureDefaultsOnce();
+      const rag = await this.getRagContext(message);
+      contextData = rag.context;
+      sources = rag.sources;
+      ragTopScore = rag.topScore;
     } else if (intent === 'COMPLAINT_ACTION') {
       contextData = await this.getComplaintContext(userId);
     }
@@ -60,10 +75,19 @@ Guidelines:
 - Format responses clearly, use bullet points for lists
 - Keep responses under 150 words unless detailed info is needed.`;
 
+    const retrievalHint =
+      typeof ragTopScore === 'number'
+        ? ragTopScore >= 0.22
+          ? 'Retrieval confidence: HIGH'
+          : ragTopScore >= 0.18
+            ? 'Retrieval confidence: MEDIUM'
+            : 'Retrieval confidence: LOW'
+        : null;
+
     const responseText = await this.generateGeminiResponse({
       apiKey,
       systemPrompt,
-      contextData,
+      contextData: retrievalHint ? `${retrievalHint}\n\n${contextData}` : contextData,
       message,
       history,
     });
@@ -71,7 +95,82 @@ Guidelines:
     return {
       message: responseText,
       intent,
+      sources,
     };
+  }
+
+  async *chatStream(
+    message: string,
+    userId: string,
+    history: ChatMessage[] = [],
+  ) {
+    const apiKey = process.env.GEMINI_API_KEY?.trim();
+    if (!apiKey) {
+      throw new ServiceUnavailableException(
+        'Chatbot is not configured. Set GEMINI_API_KEY on the server.',
+      );
+    }
+
+    const intent = this.classifyIntent(message);
+    let contextData = '';
+    let sources: RagSource[] = [];
+    let ragTopScore: number | null = null;
+
+    if (intent === 'LIVE_DATA') {
+      contextData = await this.getLiveData(userId);
+    } else if (intent === 'HOSTEL_FAQ' || intent === 'GENERAL') {
+      await this.ensureDefaultsOnce();
+      const rag = await this.getRagContext(message);
+      contextData = rag.context;
+      sources = rag.sources;
+      ragTopScore = rag.topScore;
+    } else if (intent === 'COMPLAINT_ACTION') {
+      contextData = await this.getComplaintContext(userId);
+    }
+
+    const systemPrompt = `You are HostelBot, a friendly and helpful AI assistant for ${
+      process.env.HOSTEL_NAME || 'SAU International Hostel'
+    } at South Asian University, New Delhi.
+
+You help students with:
+- Room information and allocation queries
+- Hostel rules, facilities, and timings
+- Mess timings and weekly mess menu
+- How to file complaints and track them
+- Maintenance requests and schedules
+- General campus and hostel life queries
+
+Guidelines:
+- Be warm, concise, and helpful
+- If you don't know something, say so and suggest contacting the warden or office
+- For urgent issues, suggest calling the warden's office
+- Format responses clearly, use bullet points for lists
+- Keep responses under 150 words unless detailed info is needed.`;
+
+    const retrievalHint =
+      typeof ragTopScore === 'number'
+        ? ragTopScore >= 0.22
+          ? 'Retrieval confidence: HIGH'
+          : ragTopScore >= 0.18
+            ? 'Retrieval confidence: MEDIUM'
+            : 'Retrieval confidence: LOW'
+        : null;
+
+    yield { type: 'meta', intent, sources };
+
+    const textStream = this.generateGeminiResponseStream({
+      apiKey,
+      systemPrompt,
+      contextData: retrievalHint ? `${retrievalHint}\n\n${contextData}` : contextData,
+      message,
+      history,
+    });
+
+    for await (const delta of textStream) {
+      yield { type: 'delta', text: delta };
+    }
+
+    yield { type: 'done' };
   }
 
   private classifyIntent(message: string): IntentType {
@@ -192,6 +291,9 @@ Guidelines:
       );
     }
 
+    await this.ensureDefaultKnowledgeBase();
+    this.defaultsEnsured = true;
+
     const entries = await this.prisma.knowledgeBase.findMany({
       orderBy: { createdAt: 'asc' },
     });
@@ -222,17 +324,75 @@ Guidelines:
     return { total: entries.length, updated, skipped, embedError };
   }
 
-  private async getRagContext(query: string): Promise<string> {
+  async listKnowledgeBase(q?: string) {
+    const entries = await this.prisma.knowledgeBase.findMany({
+      take: 200,
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, content: true, metadata: true, createdAt: true },
+    });
+
+    const normalized = entries
+      .map((entry) => {
+        const title = getMetadataTitle(entry.metadata);
+        const type = getMetadataType(entry.metadata);
+        return {
+          id: entry.id,
+          title,
+          type,
+          createdAt: entry.createdAt,
+          contentPreview: entry.content.slice(0, 180),
+        };
+      })
+      .filter((item) =>
+        q && q.trim().length
+          ? `${item.title || ''} ${item.type || ''} ${item.contentPreview}`
+              .toLowerCase()
+              .includes(q.toLowerCase())
+          : true,
+      );
+
+    return { total: normalized.length, entries: normalized };
+  }
+
+  async createKnowledgeBaseEntry(dto: {
+    title: string;
+    content: string;
+    type?: string;
+  }) {
+    const created = await this.prisma.knowledgeBase.create({
+      data: {
+        content: dto.content,
+        metadata: {
+          title: dto.title,
+          type: dto.type || 'custom',
+          source: 'admin',
+        },
+      },
+      select: { id: true, createdAt: true },
+    });
+
+    // Force re-embedding on the next reindex (or lazy embedding on next query).
+    return { ok: true, id: created.id, createdAt: created.createdAt };
+  }
+
+  async deleteKnowledgeBaseEntry(id: string) {
+    await this.prisma.knowledgeBase.delete({ where: { id } });
+    return { ok: true };
+  }
+
+  private async getRagContext(
+    query: string,
+  ): Promise<{ context: string; sources: RagSource[]; topScore: number | null }> {
     const apiKey = process.env.GEMINI_API_KEY?.trim();
     if (!apiKey) {
-      return this.searchKnowledgeBase(query);
+      return { context: await this.searchKnowledgeBase(query), sources: [], topScore: null };
     }
 
     let queryEmbedding: number[];
     try {
       queryEmbedding = await this.embedText(apiKey, query);
     } catch {
-      return this.searchKnowledgeBase(query);
+      return { context: await this.searchKnowledgeBase(query), sources: [], topScore: null };
     }
 
     const entries = (await this.prisma.knowledgeBase.findMany({
@@ -301,20 +461,30 @@ Guidelines:
 
   private formatContext(
     scored: Array<{ entry: KnowledgeBaseEntry; score: number }>,
-  ): string {
+  ): { context: string; sources: RagSource[]; topScore: number | null } {
     const top = scored
       .sort((a, b) => b.score - a.score)
       .filter((item) => item.score >= 0.2)
       .slice(0, 4);
 
-    if (top.length === 0) return '';
+    if (top.length === 0) return { context: '', sources: [], topScore: null };
 
-    return top
+    const sources: RagSource[] = top.map(({ entry, score }) => ({
+      id: entry.id,
+      title: getMetadataTitle(entry.metadata),
+      type: getMetadataType(entry.metadata),
+      score,
+      createdAt: entry.createdAt,
+    }));
+
+    const context = top
       .map(({ entry }) => {
         const title = getMetadataTitle(entry.metadata);
         return title ? `### ${title}\n${entry.content}` : entry.content;
       })
       .join('\n\n');
+
+    return { context, sources, topScore: top[0]?.score ?? null };
   }
 
   private tryParseEmbedding(raw: string | null): number[] | null {
@@ -683,6 +853,215 @@ Guidelines:
       clearTimeout(timer);
     }
   }
+
+  private async *generateGeminiResponseStream({
+    apiKey,
+    systemPrompt,
+    contextData,
+    message,
+    history,
+  }: {
+    apiKey: string;
+    systemPrompt: string;
+    contextData: string;
+    message: string;
+    history: ChatMessage[];
+  }): AsyncGenerator<string, void, void> {
+    const baseUrl =
+      process.env.GEMINI_API_BASE_URL?.trim() ||
+      'https://generativelanguage.googleapis.com';
+    const preferredModel = process.env.GEMINI_CHAT_MODEL?.trim();
+
+    const contents = [
+      ...history.slice(-6).map((item) => ({
+        role: item.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: item.content }],
+      })),
+      {
+        role: 'user',
+        parts: [
+          {
+            text:
+              contextData && contextData.trim().length
+                ? `Context (hostel knowledge + data):\n${contextData}\n\nUser message:\n${message}`
+                : message,
+          },
+        ],
+      },
+    ];
+
+    const modelCandidates = preferredModel
+      ? [preferredModel.replace(/^models\//, '')]
+      : await this.resolveChatModelCandidates(apiKey, baseUrl);
+
+    let lastErrorText: string | null = null;
+    for (const model of modelCandidates.slice(0, 6)) {
+      try {
+        const res = await this.streamGenerateWithModel(
+          apiKey,
+          baseUrl,
+          model,
+          systemPrompt,
+          contents,
+        );
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => '');
+          lastErrorText = text || res.statusText;
+          if (res.status === 404 || res.status === 400) continue;
+          throw new ServiceUnavailableException(
+            `Chat stream failed (${res.status}): ${text || res.statusText}`,
+          );
+        }
+
+        this.chatModelCache = model;
+        yield* this.parseGeminiStream(res);
+        return;
+      } catch (error) {
+        lastErrorText =
+          error instanceof Error && error.message ? error.message : 'Unknown error';
+      }
+    }
+
+    // Fallback: non-streaming request, then chunk the result for the UI.
+    const full = await this.generateGeminiResponse({
+      apiKey,
+      systemPrompt,
+      contextData,
+      message,
+      history,
+    }).catch((err) => {
+      throw new ServiceUnavailableException(
+        lastErrorText || (err instanceof Error ? err.message : 'Chat request failed.'),
+      );
+    });
+
+    for (const chunk of chunkText(full, 28)) {
+      yield chunk;
+    }
+  }
+
+  private async streamGenerateWithModel(
+    apiKey: string,
+    baseUrl: string,
+    model: string,
+    systemPrompt: string,
+    contents: unknown,
+  ) {
+    const controller = new AbortController();
+    const timeoutMs = 25_000;
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      return await fetch(
+        `${baseUrl}/v1beta/models/${model}:streamGenerateContent?key=${encodeURIComponent(apiKey)}`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+            contents,
+            generationConfig: {
+              temperature: 0.4,
+              maxOutputTokens: 450,
+            },
+          }),
+          signal: controller.signal,
+        },
+      );
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  private async *parseGeminiStream(
+    res: Response,
+  ): AsyncGenerator<string, void, void> {
+    const body = res.body;
+    if (!body) return;
+
+    // Node fetch provides a web ReadableStream.
+    const reader = body.getReader();
+    const decoder = new TextDecoder();
+
+    let buffer = '';
+    let emitted = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) continue;
+        if (!line.startsWith('data:')) continue;
+
+        const payload = line.slice('data:'.length).trim();
+        if (!payload || payload === '[DONE]') continue;
+
+        try {
+          const data = JSON.parse(payload) as {
+            candidates?: Array<{
+              content?: { parts?: Array<{ text?: string }> };
+            }>;
+          };
+          const next =
+            data.candidates?.[0]?.content?.parts
+              ?.map((p) => p.text || '')
+              .join('') || '';
+
+          const nextTrimmed = next;
+          if (!nextTrimmed) continue;
+
+          if (nextTrimmed.startsWith(emitted)) {
+            const delta = nextTrimmed.slice(emitted.length);
+            if (delta) yield delta;
+          } else {
+            yield nextTrimmed;
+          }
+          emitted = nextTrimmed;
+        } catch {
+          // ignore malformed chunks
+        }
+      }
+    }
+  }
+
+  private async ensureDefaultKnowledgeBase() {
+    const defaults = getDefaultKnowledgeBaseEntries();
+    if (defaults.length === 0) return;
+
+    const existing = await this.prisma.knowledgeBase.findMany({
+      select: { metadata: true },
+    });
+    const existingTitles = new Set(
+      existing
+        .map((e) => getMetadataTitle(e.metadata))
+        .filter(
+          (t): t is string => typeof t === 'string' && t.trim().length > 0,
+        ),
+    );
+
+    const toCreate = defaults.filter((d) => !existingTitles.has(d.metadata.title));
+    if (toCreate.length === 0) return;
+
+    await this.prisma.knowledgeBase.createMany({
+      data: toCreate.map((d) => ({
+        content: d.content,
+        metadata: d.metadata,
+      })),
+    });
+  }
+
+  private async ensureDefaultsOnce() {
+    if (this.defaultsEnsured) return;
+    await this.ensureDefaultKnowledgeBase();
+    this.defaultsEnsured = true;
+  }
 }
 
 function cosineSimilarity(left: number[], right: number[]) {
@@ -706,4 +1085,66 @@ function getMetadataTitle(metadata: unknown) {
   if (!metadata || typeof metadata !== 'object') return null;
   const title = (metadata as { title?: unknown }).title;
   return typeof title === 'string' && title.trim().length ? title.trim() : null;
+}
+
+function getMetadataType(metadata: unknown) {
+  if (!metadata || typeof metadata !== 'object') return null;
+  const type = (metadata as { type?: unknown }).type;
+  return typeof type === 'string' && type.trim().length ? type.trim() : null;
+}
+
+function chunkText(text: string, chunkSize: number) {
+  const chunks: string[] = [];
+  const cleaned = text || '';
+  for (let i = 0; i < cleaned.length; i += chunkSize) {
+    chunks.push(cleaned.slice(i, i + chunkSize));
+  }
+  return chunks;
+}
+
+function getDefaultKnowledgeBaseEntries(): Array<{
+  content: string;
+  metadata: { title: string; type: string; source: string };
+}> {
+  // Keep these entries small and factual; they power RAG retrieval.
+  return [
+    {
+      metadata: { title: 'Mess timings', type: 'mess', source: 'default' },
+      content:
+        'Mess timings:\n' +
+        '- Breakfast: 8:30 AM – 10:30 AM\n' +
+        '- Lunch: 12:30 PM – 2:30 PM\n' +
+        '- Dinner: 7:30 PM – 9:30 PM\n' +
+        'Timings may change on holidays/special days; confirm with the Mess Manager if needed.',
+    },
+    {
+      metadata: { title: 'Weekly mess menu (default)', type: 'mess', source: 'default' },
+      content:
+        'Weekly mess menu (subject to change):\n\n' +
+        'Breakfast (8:30 AM – 10:30 AM)\n' +
+        '- Monday: Besan chilla + chutney; cornflakes; milk; tea; boiled eggs; banana\n' +
+        '- Tuesday: Poha; cornflakes; milk; tea; boiled eggs; banana\n' +
+        '- Wednesday: Vada sambar / Idli sambar; cornflakes; milk; tea; boiled eggs; banana\n' +
+        '- Thursday: Poori with aloo dum; cornflakes; milk; tea; boiled eggs; banana\n' +
+        '- Friday: Upma with chutney; cornflakes; milk; tea; boiled eggs; banana\n' +
+        '- Saturday: Chhole-bhature; cornflakes; milk; tea; boiled eggs; banana\n' +
+        '- Sunday: Aloo paratha; cornflakes; milk; tea; boiled eggs; banana\n\n' +
+        'Lunch (12:30 PM – 2:30 PM)\n' +
+        '- Monday: Butter paneer masala / Butter chicken + chana dal + rice + roti + raita\n' +
+        '- Tuesday: Kadhi pakoda + aloo jeera + rice + roti + raita\n' +
+        '- Wednesday: Fish curry / Kadhai paneer + lal masoor dal + rice + roti + raita\n' +
+        '- Thursday: Chhole + kewa datshi + rice + roti + raita\n' +
+        '- Friday: Sri Lankan chicken curry / Paneer do pyaza + black masoor dal + rice + roti + raita\n' +
+        '- Saturday: Khichdi + aloo fry + chutney + mixed raita + papad\n' +
+        '- Sunday: Baingan bharta + arhar dal fry + rice + roti + salad\n\n' +
+        'Dinner (7:30 PM – 9:30 PM)\n' +
+        '- Monday: Gobhi masala + arhar dal + rice + roti + salad\n' +
+        '- Tuesday: Mixed vegetables + moong dal + rice + roti + salad\n' +
+        '- Wednesday: Aloo shimla + mixed dal + rice + roti + salad\n' +
+        '- Thursday: Egg curry / Veg kofta + chana dal + rice + roti + salad\n' +
+        '- Friday: Lauki chana + dal makhani + rice + roti + salad\n' +
+        '- Saturday: Chicken do pyaza / Kadhai mushroom + chana dal tadka + rice + roti + salad\n' +
+        '- Sunday: Veg biryani / Chicken biryani + raita + mirchi ka salan + dessert (kheer / gulab jamun / seviyan)',
+    },
+  ];
 }

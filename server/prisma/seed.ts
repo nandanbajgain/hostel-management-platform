@@ -170,8 +170,41 @@ async function main() {
   const knowledgeEntries = [
     {
       content:
-        'Breakfast: 7:30 AM - 9:00 AM. Lunch: 12:30 PM - 2:00 PM. Snacks: 4:30 PM - 5:30 PM. Dinner: 7:30 PM - 9:30 PM. Sunday brunch: 9:00 AM - 11:00 AM.',
-      metadata: { type: 'meal_timings', title: 'Mess meal timings' },
+        'Mess timings:\n' +
+        '- Breakfast: 8:30 AM â€“ 10:30 AM\n' +
+        '- Lunch: 12:30 PM â€“ 2:30 PM\n' +
+        '- Dinner: 7:30 PM â€“ 9:30 PM\n' +
+        'Timings may change on holidays/special days; confirm with the Mess Manager if needed.',
+      metadata: { type: 'mess', title: 'Mess timings' },
+    },
+    {
+      content:
+        'Weekly mess menu (subject to change):\n\n' +
+        'Breakfast (8:30 AM â€“ 10:30 AM)\n' +
+        '- Monday: Besan chilla + chutney; cornflakes; milk; tea; boiled eggs; banana\n' +
+        '- Tuesday: Poha; cornflakes; milk; tea; boiled eggs; banana\n' +
+        '- Wednesday: Vada sambar / Idli sambar; cornflakes; milk; tea; boiled eggs; banana\n' +
+        '- Thursday: Poori with aloo dum; cornflakes; milk; tea; boiled eggs; banana\n' +
+        '- Friday: Upma with chutney; cornflakes; milk; tea; boiled eggs; banana\n' +
+        '- Saturday: Chhole-bhature; cornflakes; milk; tea; boiled eggs; banana\n' +
+        '- Sunday: Aloo paratha; cornflakes; milk; tea; boiled eggs; banana\n\n' +
+        'Lunch (12:30 PM â€“ 2:30 PM)\n' +
+        '- Monday: Butter paneer masala / Butter chicken + chana dal + rice + roti + raita\n' +
+        '- Tuesday: Kadhi pakoda + aloo jeera + rice + roti + raita\n' +
+        '- Wednesday: Fish curry / Kadhai paneer + lal masoor dal + rice + roti + raita\n' +
+        '- Thursday: Chhole + kewa datshi + rice + roti + raita\n' +
+        '- Friday: Sri Lankan chicken curry / Paneer do pyaza + black masoor dal + rice + roti + raita\n' +
+        '- Saturday: Khichdi + aloo fry + chutney + mixed raita + papad\n' +
+        '- Sunday: Baingan bharta + arhar dal fry + rice + roti + salad\n\n' +
+        'Dinner (7:30 PM â€“ 9:30 PM)\n' +
+        '- Monday: Gobhi masala + arhar dal + rice + roti + salad\n' +
+        '- Tuesday: Mixed vegetables + moong dal + rice + roti + salad\n' +
+        '- Wednesday: Aloo shimla + mixed dal + rice + roti + salad\n' +
+        '- Thursday: Egg curry / Veg kofta + chana dal + rice + roti + salad\n' +
+        '- Friday: Lauki chana + dal makhani + rice + roti + salad\n' +
+        '- Saturday: Chicken do pyaza / Kadhai mushroom + chana dal tadka + rice + roti + salad\n' +
+        '- Sunday: Veg biryani / Chicken biryani + raita + mirchi ka salan + dessert (kheer / gulab jamun / seviyan)',
+      metadata: { type: 'mess', title: 'Weekly mess menu' },
     },
     {
       content:
