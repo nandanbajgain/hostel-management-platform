@@ -64,7 +64,8 @@ HASH_SALT=<strong-random-string>
 HOSTEL_NAME=South Asian University Hostel
 GEMINI_API_KEY=<optional if chatbot is enabled>
 GEMINI_CHAT_MODEL=gemini-1.5-flash
-GEMINI_EMBED_MODEL=embedding-001
+# Optional (auto-detected if omitted)
+GEMINI_EMBED_MODEL=
 GEMINI_API_BASE_URL=https://generativelanguage.googleapis.com
 ANTHROPIC_API_KEY=<optional if image validation is enabled>
 CLOUDINARY_CLOUD_NAME=<optional if uploads are enabled>

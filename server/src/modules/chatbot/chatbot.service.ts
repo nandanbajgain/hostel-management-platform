@@ -20,6 +20,8 @@ type KnowledgeBaseEntry = {
 export class ChatbotService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private embeddingModelCache: string | null = null;
+
   async chat(message: string, userId: string, history: ChatMessage[] = []) {
     const apiKey = process.env.GEMINI_API_KEY?.trim();
     if (!apiKey) {
@@ -194,17 +196,29 @@ Guidelines:
     });
 
     let updated = 0;
+    let skipped = 0;
+    let embedError: string | null = null;
     for (const entry of entries) {
       if (entry.embedding) continue;
-      const embedding = await this.embedText(apiKey, entry.content);
-      await this.prisma.knowledgeBase.update({
-        where: { id: entry.id },
-        data: { embedding: JSON.stringify(embedding) },
-      });
-      updated += 1;
+      try {
+        const embedding = await this.embedText(apiKey, entry.content);
+        await this.prisma.knowledgeBase.update({
+          where: { id: entry.id },
+          data: { embedding: JSON.stringify(embedding) },
+        });
+        updated += 1;
+      } catch (error) {
+        skipped += 1;
+        if (!embedError) {
+          embedError =
+            error instanceof Error && error.message
+              ? error.message
+              : 'Embedding failed.';
+        }
+      }
     }
 
-    return { total: entries.length, updated };
+    return { total: entries.length, updated, skipped, embedError };
   }
 
   private async getRagContext(query: string): Promise<string> {
@@ -319,25 +333,42 @@ Guidelines:
     const baseUrl =
       process.env.GEMINI_API_BASE_URL?.trim() ||
       'https://generativelanguage.googleapis.com';
-    // Default to a widely available embeddings model for the Gemini API.
-    const model = process.env.GEMINI_EMBED_MODEL?.trim() || 'embedding-001';
+    const preferredModel = process.env.GEMINI_EMBED_MODEL?.trim();
 
     const controller = new AbortController();
     const timeoutMs = 10_000;
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const res = await fetch(
-        `${baseUrl}/v1beta/models/${model}:embedContent?key=${encodeURIComponent(apiKey)}`,
-        {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            content: { parts: [{ text }] },
-          }),
-          signal: controller.signal,
-        },
+      const model = await this.resolveEmbeddingModel(
+        apiKey,
+        baseUrl,
+        preferredModel,
       );
+      let res = await this.embedWithModel(
+        apiKey,
+        baseUrl,
+        model,
+        text,
+        controller.signal,
+      );
+
+      if (!res.ok && res.status === 404 && preferredModel) {
+        // If an explicitly configured model is invalid, try auto-detection once.
+        this.embeddingModelCache = null;
+        const fallbackModel = await this.resolveEmbeddingModel(
+          apiKey,
+          baseUrl,
+          undefined,
+        );
+        res = await this.embedWithModel(
+          apiKey,
+          baseUrl,
+          fallbackModel,
+          text,
+          controller.signal,
+        );
+      }
 
       if (!res.ok) {
         const text = await res.text().catch(() => '');
@@ -354,6 +385,84 @@ Guidelines:
         throw new ServiceUnavailableException('Embedding response was empty.');
       }
       return values;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  private async embedWithModel(
+    apiKey: string,
+    baseUrl: string,
+    model: string,
+    text: string,
+    signal: AbortSignal,
+  ) {
+    return fetch(
+      `${baseUrl}/v1beta/models/${model}:embedContent?key=${encodeURIComponent(apiKey)}`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ content: { parts: [{ text }] } }),
+        signal,
+      },
+    );
+  }
+
+  private async resolveEmbeddingModel(
+    apiKey: string,
+    baseUrl: string,
+    preferredModel?: string,
+  ): Promise<string> {
+    if (preferredModel) {
+      return preferredModel.replace(/^models\//, '');
+    }
+    if (this.embeddingModelCache) return this.embeddingModelCache;
+
+    const controller = new AbortController();
+    const timeoutMs = 10_000;
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const res = await fetch(
+        `${baseUrl}/v1beta/models?key=${encodeURIComponent(apiKey)}`,
+        { method: 'GET', signal: controller.signal },
+      );
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new ServiceUnavailableException(
+          `Gemini ListModels failed (${res.status}): ${text || res.statusText}`,
+        );
+      }
+
+      const data = (await res.json()) as {
+        models?: Array<{
+          name?: string;
+          supportedGenerationMethods?: string[];
+        }>;
+      };
+
+      const candidates =
+        data.models
+          ?.filter((m) =>
+            (m.supportedGenerationMethods || []).includes('embedContent'),
+          )
+          .map((m) => (m.name || '').replace(/^models\//, ''))
+          .filter(Boolean) || [];
+
+      const picked =
+        candidates.find((name) => name.toLowerCase().includes('embedding')) ||
+        candidates[0] ||
+        null;
+
+      if (!picked) {
+        throw new ServiceUnavailableException(
+          'No embedding model available for this Gemini API key. RAG embeddings cannot be indexed with this key.',
+        );
+      }
+
+      this.embeddingModelCache = picked;
+      return picked;
     } finally {
       clearTimeout(timer);
     }
