@@ -213,7 +213,12 @@ Guidelines:
       return this.searchKnowledgeBase(query);
     }
 
-    const queryEmbedding = await this.embedText(apiKey, query);
+    let queryEmbedding: number[];
+    try {
+      queryEmbedding = await this.embedText(apiKey, query);
+    } catch {
+      return this.searchKnowledgeBase(query);
+    }
 
     const entries = (await this.prisma.knowledgeBase.findMany({
       take: 200,
@@ -242,11 +247,15 @@ Guidelines:
       // lazily embed a few newest entries, then score again
       const toEmbed = entries.filter((e) => !e.embedding).slice(0, 10);
       for (const entry of toEmbed) {
-        const embedding = await this.embedText(apiKey, entry.content);
-        await this.prisma.knowledgeBase.update({
-          where: { id: entry.id },
-          data: { embedding: JSON.stringify(embedding) },
-        });
+        try {
+          const embedding = await this.embedText(apiKey, entry.content);
+          await this.prisma.knowledgeBase.update({
+            where: { id: entry.id },
+            data: { embedding: JSON.stringify(embedding) },
+          });
+        } catch {
+          // ignore and fall back to keyword/contextless answers
+        }
       }
 
       const refreshed = (await this.prisma.knowledgeBase.findMany({
@@ -310,8 +319,8 @@ Guidelines:
     const baseUrl =
       process.env.GEMINI_API_BASE_URL?.trim() ||
       'https://generativelanguage.googleapis.com';
-    const model =
-      process.env.GEMINI_EMBED_MODEL?.trim() || 'text-embedding-004';
+    // Default to a widely available embeddings model for the Gemini API.
+    const model = process.env.GEMINI_EMBED_MODEL?.trim() || 'embedding-001';
 
     const controller = new AbortController();
     const timeoutMs = 10_000;
