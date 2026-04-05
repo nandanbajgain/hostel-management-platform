@@ -890,25 +890,34 @@ Guidelines:
     if (defaults.length === 0) return;
 
     const existing = await this.prisma.knowledgeBase.findMany({
-      select: { metadata: true },
+      select: { id: true, metadata: true },
     });
-    const existingTitles = new Set(
-      existing
-        .map((e) => getMetadataTitle(e.metadata))
-        .filter(
-          (t): t is string => typeof t === 'string' && t.trim().length > 0,
-        ),
-    );
 
-    const toCreate = defaults.filter((d) => !existingTitles.has(d.metadata.title));
-    if (toCreate.length === 0) return;
+    const byTitle = new Map<string, { id: string; metadata: unknown }>();
+    for (const row of existing) {
+      const title = getMetadataTitle(row.metadata);
+      if (title && !byTitle.has(title)) {
+        byTitle.set(title, { id: row.id, metadata: row.metadata });
+      }
+    }
 
-    await this.prisma.knowledgeBase.createMany({
-      data: toCreate.map((d) => ({
-        content: d.content,
-        metadata: d.metadata,
-      })),
-    });
+    for (const entry of defaults) {
+      const current = byTitle.get(entry.metadata.title);
+      if (!current) {
+        await this.prisma.knowledgeBase.create({
+          data: { content: entry.content, metadata: entry.metadata },
+        });
+        continue;
+      }
+
+      const source = getMetadataSource(current.metadata);
+      if (!source || source === 'default' || source === 'seed') {
+        await this.prisma.knowledgeBase.update({
+          where: { id: current.id },
+          data: { content: entry.content, metadata: entry.metadata, embedding: null },
+        });
+      }
+    }
   }
 
   private async ensureDefaultsOnce() {
@@ -945,6 +954,12 @@ function getMetadataType(metadata: unknown) {
   if (!metadata || typeof metadata !== 'object') return null;
   const type = (metadata as { type?: unknown }).type;
   return typeof type === 'string' && type.trim().length ? type.trim() : null;
+}
+
+function getMetadataSource(metadata: unknown) {
+  if (!metadata || typeof metadata !== 'object') return null;
+  const source = (metadata as { source?: unknown }).source;
+  return typeof source === 'string' && source.trim().length ? source.trim() : null;
 }
 
 function chunkText(text: string, chunkSize: number) {
@@ -1015,6 +1030,79 @@ function getDefaultKnowledgeBaseEntries(): Array<{
         '- Friday: Lauki chana + dal makhani + rice + roti + salad\n' +
         '- Saturday: Chicken do pyaza / Kadhai mushroom + chana dal tadka + rice + roti + salad\n' +
         '- Sunday: Veg biryani / Chicken biryani + raita + mirchi ka salan + dessert (kheer / gulab jamun / seviyan)',
+    },
+    {
+      metadata: {
+        title: 'Hostel contacts (wardens & support)',
+        type: 'contacts',
+        source: 'default',
+      },
+      content:
+        'Hostel administrative and support contacts:\n' +
+        '- Dr. Bijoy Chand Chatterjee — Warden (Boys Hostel): bijoycc@sau.int, +91 8383888914\n' +
+        '- Dr. Rinkoo Devi Gupta — Warden (Girls Hostel): rdgupta@sau.ac.in\n' +
+        '- Kajori Bhatnagar — Warden Incharge (Girls Hostel): kajori.bhatnagar@sau.int\n' +
+        '- Vineet Ghildyal — Deputy Director (Student Services): vineet@sau.int\n' +
+        '- Arvind Singh Negi — Office Assistant (Boys Hostel): +91 9560880253\n' +
+        '- Anupma Arora — Office Assistant (Girls Hostel): +91 9971567894\n' +
+        '- Sushil Kumar — Mess Manager: +91 7398034344\n' +
+        '- Uttam Kumar — Hostel Buildings Caretaker: +91 8130240061\n' +
+        '- Bishan Nath — Civil & Electrical Maintenance: +91 9953934396\n' +
+        '- Manoj Kumar — Lift Operator: +91 9910263062\n' +
+        '- Security Supervisor — Outsourced Security: +91 9599481089\n' +
+        '- Mr. CS Chahar — AR (GA) Housekeeping & Security: ar-admin@sau.int\n' +
+        '- Prof. Navnit Jha — Dean of Students: navnitjha@sau.ac.in, +91 8800933491',
+    },
+    {
+      metadata: {
+        title: 'Hostel facilities and general information',
+        type: 'facilities',
+        source: 'default',
+      },
+      content:
+        'Hostel facilities and general information:\n' +
+        '- Total capacity: ~1000 units of shared accommodation\n' +
+        '- Structure: 12 towers\n' +
+        '- Room type: large, spacious, partially furnished shared rooms\n' +
+        '- Hostel fee: US $100 per academic semester (SAARC region students)\n' +
+        '- Eligibility: on-campus housing for Master’s and Doctoral students\n' +
+        '- Max stay (PhD): 5 years\n' +
+        "- Vacation policy: Master's students must vacate during summer/winter breaks\n" +
+        '- Facilities: Mess, lounge, fitness centre, playgrounds, frequent cleaning',
+    },
+    {
+      metadata: {
+        title: 'Hostel Management Committee (HMC)',
+        type: 'committee',
+        source: 'default',
+      },
+      content:
+        'Hostel Management Committee (HMC) members:\n' +
+        '- Chairperson: Dean of Students\n' +
+        '- Member: Registrar or nominee\n' +
+        '- Member: Warden, Boys’ Hostel\n' +
+        '- Member: Warden, Girls’ Hostel\n' +
+        '- Member: Dr. Dhananjay Tripathi (Associate Professor, Deptt. of IR, FSS)\n' +
+        '- Member: Dr. Priti Saxena (Assistant Professor (SG), FLSB)\n' +
+        '- Member: President of Hostel Committee (Student Representative)\n' +
+        '- Member Secretary: Assistant Director (HSS)',
+    },
+    {
+      metadata: {
+        title: 'Rules: curfew, visitors, prohibited items, fines',
+        type: 'rules',
+        source: 'default',
+      },
+      content:
+        'Key hostel rules and regulations:\n' +
+        '- Curfew: all residents must report back to the SAU campus by 8:00 PM daily\n' +
+        '- Attendance: mandatory daily signing in the attendance and late-night registers\n' +
+        '- Late Night/Night Out: requires prior written approval by 3:00 PM; late night allowed once a week; night-out limited to 4 non-sequential nights per month\n' +
+        '- Visitors: permitted from 8:00 AM to 7:00 PM with Warden approval and roommate consent\n' +
+        '- Prohibited items: cooking in rooms; heaters (>500W); ACs; alcohol; drugs; smoking; pets; and roof access\n' +
+        '- Fines: INR 10,000 for unauthorized guests; INR 2,000 for lost keys\n' +
+        '- Dress code: proper attire required in all common and academic areas\n' +
+        '- Inspections: authorities may inspect rooms at any time for safety and security',
     },
   ];
 }
