@@ -60,6 +60,13 @@ enum MaintenanceStatus {
   CANCELLED
 }
 
+enum CleaningAssignmentStatus {
+  SCHEDULED
+  COMPLETED
+  MISSED
+  CANCELLED
+}
+
 model User {
   id              String         @id @default(uuid())
   name            String
@@ -84,6 +91,7 @@ model User {
   allocation      RoomAllocation?
   complaints      Complaint[]
   notifications   Notification[]
+  cleaningFeedback CleaningFeedback[]
 
   @@map("users")
 }
@@ -98,6 +106,7 @@ model Room {
   amenities   String[]
   createdAt   DateTime         @default(now())
   allocations RoomAllocation[]
+  cleaningAssignments CleaningAssignment[]
 
   @@map("rooms")
 }
@@ -182,6 +191,54 @@ model Notification {
   user      User     @relation(fields: [userId], references: [id])
 
   @@map("notifications")
+}
+
+model CleaningStaff {
+  id        String              @id @default(uuid())
+  name      String
+  phone     String?
+  zone      String?
+  isActive  Boolean             @default(true)
+  createdAt DateTime            @default(now())
+  assignments CleaningAssignment[]
+
+  @@map("cleaning_staff")
+}
+
+model CleaningAssignment {
+  id             String                  @id @default(uuid())
+  roomId         String
+  staffId        String
+  scheduledStart DateTime
+  scheduledEnd   DateTime
+  status         CleaningAssignmentStatus @default(SCHEDULED)
+  notes          String?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+
+  room    Room         @relation(fields: [roomId], references: [id])
+  staff   CleaningStaff @relation(fields: [staffId], references: [id])
+  feedback CleaningFeedback?
+
+  @@index([scheduledStart])
+  @@index([roomId, scheduledStart])
+  @@map("cleaning_assignments")
+}
+
+model CleaningFeedback {
+  id           String   @id @default(uuid())
+  assignmentId String   @unique
+  userId       String
+  cleaned      Boolean  @default(true)
+  rating       Int
+  comment      String?
+  submittedAt  DateTime @default(now())
+
+  assignment CleaningAssignment @relation(fields: [assignmentId], references: [id])
+  user       User              @relation(fields: [userId], references: [id])
+
+  @@index([userId, submittedAt])
+  @@map("cleaning_feedback")
 }
 
 model KnowledgeBase {

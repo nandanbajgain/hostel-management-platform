@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AuthModule } from './modules/auth/auth.module';
 import { AnnouncementsModule } from './modules/announcements/announcements.module';
 import { ChatbotModule } from './modules/chatbot/chatbot.module';
+import { CleaningModule } from './modules/cleaning/cleaning.module';
 import { ComplaintsModule } from './modules/complaints/complaints.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { MaintenanceModule } from './modules/maintenance/maintenance.module';
@@ -34,6 +35,7 @@ import { PrismaModule } from './prisma/prisma.module';
     ComplaintsModule,
     NotificationsModule,
     ChatbotModule,
+    CleaningModule,
     UploadModule,
     UsersModule,
     MaintenanceModule,

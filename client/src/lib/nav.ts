@@ -3,6 +3,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   AlertCircle,
   BedDouble,
+  CalendarDays,
   EyeOff,
   Home,
   LayoutDashboard,
@@ -26,6 +27,7 @@ const adminNav: NavItem[] = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/rooms', icon: BedDouble, label: 'Room Management' },
   { to: '/admin/complaints', icon: AlertCircle, label: 'Complaints' },
+  { to: '/cleaning', icon: CalendarDays, label: 'Cleaning Schedule' },
   { to: '/students', icon: UserCheck, label: 'Students' },
   { to: '/maintenance', icon: Wrench, label: 'Maintenance' },
 ]
@@ -34,6 +36,7 @@ const wardenNav: NavItem[] = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/rooms', icon: BedDouble, label: 'Rooms' },
   { to: '/admin/complaints', icon: AlertCircle, label: 'Complaints' },
+  { to: '/cleaning', icon: CalendarDays, label: 'Cleaning Schedule' },
   { to: '/students', icon: UserCheck, label: 'Students' },
   { to: '/maintenance', icon: Wrench, label: 'Maintenance' },
 ]
@@ -43,4 +46,3 @@ export function getNavItems(role: Role | undefined): NavItem[] {
   if (role === 'WARDEN') return wardenNav
   return studentNav
 }
-

@@ -20,6 +20,7 @@ import RoomManagement from '@/pages/admin/RoomManagement'
 import ComplaintsAdmin from '@/pages/admin/ComplaintsAdmin'
 import MaintenanceAdmin from '@/pages/admin/MaintenanceAdmin'
 import StudentManagement from '@/pages/admin/StudentManagement'
+import CleaningSchedule from '@/pages/admin/CleaningSchedule'
 import WardenDashboard from '@/pages/warden/WardenDashboard'
 
 function ProtectedRoute({
@@ -123,6 +124,14 @@ export default function App() {
                 }
               />
               <Route path="maintenance" element={<MaintenanceAdmin />} />
+              <Route
+                path="cleaning"
+                element={
+                  <ProtectedRoute roles={['ADMIN', 'WARDEN']}>
+                    <CleaningSchedule />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="students"
                 element={
