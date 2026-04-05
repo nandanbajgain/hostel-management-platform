@@ -57,9 +57,7 @@ export class ChatbotService {
       contextData = await this.getComplaintContext(userId);
     }
 
-    const systemPrompt = `You are HostelBot, a friendly and helpful AI assistant for ${
-      getHostelDisplayName(process.env.HOSTEL_NAME)
-    } at South Asian University, New Delhi.
+    const systemPrompt = `You are HostelBot, a friendly and helpful AI assistant for SAU Hostel.
 
 You help students with:
 - Room information and allocation queries
@@ -128,9 +126,7 @@ Guidelines:
       contextData = await this.getComplaintContext(userId);
     }
 
-    const systemPrompt = `You are HostelBot, a friendly and helpful AI assistant for ${
-      getHostelDisplayName(process.env.HOSTEL_NAME)
-    } at South Asian University, New Delhi.
+    const systemPrompt = `You are HostelBot, a friendly and helpful AI assistant for SAU Hostel.
 
 You help students with:
 - Room information and allocation queries
@@ -1091,22 +1087,6 @@ function getMetadataType(metadata: unknown) {
   if (!metadata || typeof metadata !== 'object') return null;
   const type = (metadata as { type?: unknown }).type;
   return typeof type === 'string' && type.trim().length ? type.trim() : null;
-}
-
-function getHostelDisplayName(raw: string | undefined) {
-  const name = (raw || '').trim();
-  if (!name) return 'SAU Hostel';
-
-  const lower = name.toLowerCase();
-  const placeholders = new Set([
-    'your hostel name',
-    'hostel name',
-    'your hostel',
-    'your hostel name at south asian university',
-  ]);
-  if (placeholders.has(lower)) return 'SAU Hostel';
-
-  return name;
 }
 
 function chunkText(text: string, chunkSize: number) {
