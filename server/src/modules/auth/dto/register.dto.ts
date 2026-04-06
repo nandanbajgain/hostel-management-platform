@@ -3,13 +3,14 @@ import {
   IsArray,
   IsEmail,
   IsEnum,
+  IsOptional,
   IsUrl,
   IsString,
   Matches,
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { Gender, Role } from '@prisma/client';
+  import { Gender, Role } from '@prisma/client';
 
 export class RegisterDto {
   @IsString()
@@ -23,11 +24,7 @@ export class RegisterDto {
   password: string;
 
   @IsEnum(Role)
-  role?: Role;
-
-  @IsString()
-  @Matches(/^\+?[1-9]\d{9,14}$/, {
-    message: 'Phone number must be a valid E.164 number (10-15 digits)',
+  @IsOptional()
   })
   phone: string;
 

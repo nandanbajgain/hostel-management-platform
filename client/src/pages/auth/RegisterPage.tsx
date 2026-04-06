@@ -47,6 +47,7 @@ const schema = z.object({
     .trim()
     .regex(/^\+?[1-9]\d{9,14}$/, 'Enter a valid parent contact (10-15 digits)'),
   avatarUrl: z.string().min(1, 'Student image is required'),
+  role: z.literal('STUDENT'),
 })
 
 type FormData = z.infer<typeof schema>
@@ -83,7 +84,7 @@ export default function RegisterPage() {
     watch,
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { sportsInterests: [] },
+    defaultValues: { sportsInterests: [], role: 'STUDENT' },
   })
 
   const sports = watch('sportsInterests') || []
