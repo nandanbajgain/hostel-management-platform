@@ -86,6 +86,40 @@ export default function ComplaintsAdmin() {
             <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, marginTop: 16 }}>
               {complaint.description}
             </p>
+
+            {complaint.imageUrl ? (
+              <div style={{ marginTop: 14 }}>
+                <a
+                  href={complaint.imageUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: 'var(--accent-secondary)', fontSize: 13, fontWeight: 600 }}
+                >
+                  View uploaded photo
+                </a>
+                <div
+                  style={{
+                    marginTop: 10,
+                    borderRadius: 12,
+                    border: '1px solid var(--border-default)',
+                    overflow: 'hidden',
+                    background: 'rgba(255,255,255,0.02)',
+                  }}
+                >
+                  <img
+                    src={complaint.imageUrl}
+                    alt="Complaint upload"
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                    style={{ width: '100%', maxHeight: 320, objectFit: 'cover', display: 'block' }}
+                    onError={(event) => {
+                      const target = event.currentTarget
+                      target.style.display = 'none'
+                    }}
+                  />
+                </div>
+              </div>
+            ) : null}
             <div
               style={{
                 display: 'grid',
