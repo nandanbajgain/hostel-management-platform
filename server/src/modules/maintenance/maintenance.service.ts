@@ -11,23 +11,44 @@ import {
 export class MaintenanceService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: CreateMaintenanceDto, createdBy?: string) {
+  async create(
+    dto: CreateMaintenanceDto,
+    creator?: { id: string; role: string; name: string; email: string },
+  ) {
+    const isPrivileged = creator?.role === 'ADMIN' || creator?.role === 'WARDEN';
+    const isPublic = isPrivileged ? dto.isPublic ?? true : false;
     return this.prisma.maintenanceTask.create({
       data: {
         title: dto.title,
-        description: createdBy
-          ? `${dto.description}\n\nSubmitted by: ${createdBy}`
-          : dto.description,
+        description: dto.description,
         location: dto.location,
         assignedTo: dto.assignedTo,
         scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : new Date(),
+        createdByUserId: creator?.id,
+        isPublic,
       },
     });
   }
 
-  async findAll(status?: MaintenanceStatus) {
+  async findAllForUser(
+    user: { id: string; role: string },
+    status?: MaintenanceStatus,
+  ) {
+    const isPrivileged = user.role === 'ADMIN' || user.role === 'WARDEN';
     return this.prisma.maintenanceTask.findMany({
-      where: status ? { status } : undefined,
+      where: {
+        ...(status ? { status } : {}),
+        ...(isPrivileged
+          ? {}
+          : {
+              OR: [{ createdByUserId: user.id }, { isPublic: true }],
+            }),
+      },
+      include: isPrivileged
+        ? {
+            createdByUser: { select: { id: true, name: true, email: true } },
+          }
+        : undefined,
       orderBy: [
         { status: 'asc' },
         { scheduledAt: 'asc' },

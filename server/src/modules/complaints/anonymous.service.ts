@@ -13,14 +13,30 @@ export class AnonymousService {
   constructor(private readonly prisma: PrismaService) {}
 
   async submit(dto: CreateComplaintDto, userId: string) {
-    if (dto.imageUrl) {
-      const isValid = await this.validateImage(dto.imageUrl);
-      if (!isValid) {
-        throw new BadRequestException(
-          'Image does not appear to show a hostel maintenance or facility issue. Please upload a relevant photo.',
-        );
-      }
+    if (!dto.imageUrl) {
+      throw new BadRequestException(
+        'Anonymous complaints require photograph proof. Please upload a supporting image.',
+      );
     }
+
+    const allowedAnonymousCategories = new Set(['SECURITY', 'OTHER']);
+    if (!allowedAnonymousCategories.has(dto.category)) {
+      throw new BadRequestException(
+        'Anonymous complaints are limited to student/staff reports with proof. Please use Maintenance for plumbing/cleaning/electrical requests.',
+      );
+    }
+
+    const isValid = await this.validateImage(dto.imageUrl);
+    if (!isValid) {
+      throw new BadRequestException(
+        'Uploaded image does not look like valid proof for an anonymous report. Please upload a relevant photo.',
+      );
+    }
+
+    const allocation = await this.prisma.roomAllocation.findUnique({
+      where: { userId },
+      include: { room: { select: { number: true } } },
+    });
 
     const complaint = await this.prisma.complaint.create({
       data: {
@@ -30,6 +46,7 @@ export class AnonymousService {
         description: dto.description,
         imageUrl: dto.imageUrl,
         status: 'PENDING',
+        roomNumber: allocation?.isActive ? allocation.room.number : null,
       },
     });
 
@@ -51,7 +68,7 @@ export class AnonymousService {
 
   async track(token: string) {
     const complaint = await this.prisma.complaint.findUnique({
-      where: { token },
+      where: { token: token.trim().toLowerCase() },
       select: {
         token: true,
         category: true,
@@ -59,6 +76,7 @@ export class AnonymousService {
         description: true,
         status: true,
         adminNote: true,
+        roomNumber: true,
         createdAt: true,
         resolvedAt: true,
         updatedAt: true,
@@ -89,7 +107,7 @@ export class AnonymousService {
             { type: 'image', source: { type: 'url', url: imageUrl } },
             {
               type: 'text',
-              text: 'Does this image show a hostel maintenance issue, cleanliness problem, infrastructure damage, broken furniture, plumbing issue, or any facility concern in a residential building? Reply only YES or NO.',
+              text: 'Does this image appear to be relevant proof for a hostel-related complaint about a student or staff member (e.g., incident evidence, rule violation evidence, unsafe behavior evidence) rather than a random/unrelated photo? Reply only YES or NO.',
             },
           ],
         },

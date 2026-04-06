@@ -71,7 +71,7 @@ export default function MaintenanceAdmin() {
       <div>
         <h1 style={{ fontFamily: 'Sora', fontSize: 24, margin: 0 }}>Maintenance</h1>
         <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
-          Submit maintenance requests and monitor facility work.
+          Submit maintenance requests and monitor facility work. Students only see their own requests (plus public notices).
         </p>
       </div>
 
@@ -146,6 +146,7 @@ export default function MaintenanceAdmin() {
                   <div style={{ fontFamily: 'Sora', fontSize: 18 }}>{task.title}</div>
                   <div style={{ color: 'var(--text-tertiary)', fontSize: 13, marginTop: 4 }}>
                     {task.location} · Scheduled {format(new Date(task.scheduledAt), 'dd MMM yyyy')}
+                    {canManage && task.createdByUser ? ` · Requested by ${task.createdByUser.name}` : ''}
                   </div>
                 </div>
                 <StatusBadge status={task.status} />

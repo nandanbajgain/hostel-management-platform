@@ -25,7 +25,7 @@ export default function AnonymousComplaintPage() {
       <div>
         <h1 style={{ fontFamily: 'Sora', fontSize: 24, margin: 0 }}>Report Anonymously</h1>
         <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
-          Raise hostel concerns without attaching your profile to the complaint.
+          Use this only to report a student/staff issue. A proof photo is required. For cleaning/plumbing/electrical, use Maintenance.
         </p>
       </div>
 

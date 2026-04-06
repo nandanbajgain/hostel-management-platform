@@ -10,8 +10,11 @@ import { getErrorMessage } from '@/lib/errors'
 
 const schema = z.object({
   category: z.string().min(1, 'Select a category'),
-  title: z.string().min(5, 'Minimum 5 characters'),
-  description: z.string().min(20, 'Please describe the issue in at least 20 characters'),
+  title: z.string().min(5, 'Minimum 5 characters').max(120, 'Max 120 characters'),
+  description: z
+    .string()
+    .min(20, 'Please describe the issue in at least 20 characters')
+    .max(1000, 'Max 1000 characters'),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -27,6 +30,8 @@ const categories = [
   'OTHER',
 ]
 
+const anonymousCategories = ['SECURITY', 'OTHER']
+
 export default function ComplaintForm({
   onSuccess,
   anonymous = false,
@@ -34,6 +39,7 @@ export default function ComplaintForm({
   onSuccess?: (payload: { token: string }) => void
   anonymous?: boolean
 }) {
+  const visibleCategories = anonymous ? anonymousCategories : categories
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -45,6 +51,10 @@ export default function ComplaintForm({
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
   const submit = async (values: FormValues) => {
+    if (anonymous && !imageFile) {
+      toast.error('Anonymous complaints require a proof photo')
+      return
+    }
     setLoading(true)
     try {
       let imageUrl: string | undefined
@@ -122,7 +132,7 @@ export default function ComplaintForm({
           }}
         >
           <option value="">Select category</option>
-          {categories.map((category) => (
+          {visibleCategories.map((category) => (
             <option key={category} value={category}>
               {category.replaceAll('_', ' ')}
             </option>
@@ -158,6 +168,7 @@ export default function ComplaintForm({
           {...register('description')}
           rows={5}
           placeholder="Describe the issue in detail"
+          maxLength={1000}
           style={{
             width: '100%',
             background: 'var(--bg-tertiary)',
@@ -178,7 +189,7 @@ export default function ComplaintForm({
 
       <div>
         <label style={{ display: 'block', fontSize: 13, marginBottom: 6, color: 'var(--text-secondary)' }}>
-          Supporting Image
+          {anonymous ? 'Proof photo (required)' : 'Supporting Image'}
         </label>
         <ImageUploadZone
           imagePreview={imagePreview}

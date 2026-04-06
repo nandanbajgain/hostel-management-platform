@@ -32,14 +32,20 @@ const schema = z.object({
   name: z.string().min(2, 'Enter your full name'),
   email: z.string().email('Invalid email'),
   password: z.string().min(6, 'Minimum 6 characters'),
-  phone: z.string().min(8, 'Enter a valid phone number'),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^\+?[1-9]\d{9,14}$/, 'Enter a valid phone number (10-15 digits)'),
   enrollmentNo: z.string().min(4, 'Enrollment number is required'),
   course: z.string().min(2, 'Course is required'),
   gender: z.enum(['MALE', 'FEMALE', 'OTHER']),
   sportsInterests: z.array(z.string()).min(1, 'Select at least one sport'),
   careerGoal: z.string().min(10, 'Please add a career goal'),
-  address: z.string().min(10, 'Address is required'),
-  parentContactNo: z.string().min(8, 'Parent contact is required'),
+  address: z.string().min(10, 'Address is required').max(250, 'Max 250 characters'),
+  parentContactNo: z
+    .string()
+    .trim()
+    .regex(/^\+?[1-9]\d{9,14}$/, 'Enter a valid parent contact (10-15 digits)'),
   avatarUrl: z.string().min(1, 'Student image is required'),
 })
 
@@ -97,6 +103,15 @@ export default function RegisterPage() {
 
   const uploadAvatar = async (file?: File | null) => {
     if (!file) return
+    const allowed = ['image/jpeg', 'image/png', 'image/webp']
+    if (!allowed.includes(file.type)) {
+      toast.error('Only JPEG, PNG, or WEBP images are allowed')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be under 5MB')
+      return
+    }
     setUploading(true)
     try {
       const formData = new FormData()

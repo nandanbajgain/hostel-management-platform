@@ -15,8 +15,18 @@ export class ComplaintsService {
   ) {}
 
   async create(userId: string, dto: CreateComplaintDto) {
+    const allocation = await this.prisma.roomAllocation.findUnique({
+      where: { userId },
+      include: { room: { select: { number: true } } },
+    });
+
     return this.prisma.complaint.create({
-      data: { ...dto, userId, isAnonymous: false },
+      data: {
+        ...dto,
+        userId,
+        isAnonymous: false,
+        roomNumber: allocation?.isActive ? allocation.room.number : null,
+      },
     });
   }
 
@@ -82,13 +92,14 @@ export class ComplaintsService {
 
   async trackByToken(token: string) {
     const complaint = await this.prisma.complaint.findUnique({
-      where: { token },
+      where: { token: token.trim().toLowerCase() },
       select: {
         token: true,
         category: true,
         title: true,
         status: true,
         adminNote: true,
+        roomNumber: true,
         createdAt: true,
         resolvedAt: true,
       },

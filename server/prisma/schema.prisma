@@ -90,6 +90,7 @@ model User {
   updatedAt       DateTime       @updatedAt
   allocation      RoomAllocation?
   complaints      Complaint[]
+  maintenanceTasks MaintenanceTask[] @relation("MaintenanceCreatedBy")
   notifications   Notification[]
   cleaningFeedback CleaningFeedback[]
 
@@ -129,6 +130,7 @@ model Complaint {
   token       String             @unique @default(cuid())
   isAnonymous Boolean            @default(false)
   userId      String?
+  roomNumber  String?
   category    ComplaintCategory
   title       String
   description String
@@ -163,7 +165,11 @@ model MaintenanceTask {
   status      MaintenanceStatus @default(SCHEDULED)
   scheduledAt DateTime
   completedAt DateTime?
+  createdByUserId String?
+  isPublic    Boolean           @default(false)
   createdAt   DateTime          @default(now())
+
+  createdByUser User? @relation("MaintenanceCreatedBy", fields: [createdByUserId], references: [id])
 
   @@map("maintenance_tasks")
 }

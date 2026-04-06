@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsDateString,
   IsEnum,
   IsOptional,
@@ -27,6 +28,10 @@ export class CreateMaintenanceDto {
   @IsDateString()
   @IsOptional()
   scheduledAt?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isPublic?: boolean;
 }
 
 export class UpdateMaintenanceDto {

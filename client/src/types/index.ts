@@ -40,6 +40,7 @@ export interface Complaint {
   id: string
   token: string
   isAnonymous: boolean
+  roomNumber?: string | null
   category: ComplaintCategory
   title: string
   description: string
@@ -93,6 +94,8 @@ export interface MaintenanceTask {
   scheduledAt: string
   completedAt?: string | null
   createdAt: string
+  isPublic?: boolean
+  createdByUser?: Pick<User, 'id' | 'name' | 'email'>
 }
 
 export interface Announcement {

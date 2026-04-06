@@ -7,6 +7,7 @@ import { RedisService } from '../../infra/redis/redis.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AllocateRoomDto, CreateRoomDto } from './dto/create-room.dto';
 import { RoomStatus } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class RoomsService {
@@ -91,57 +92,93 @@ export class RoomsService {
   }
 
   async allocate(dto: AllocateRoomDto) {
-    const student = await this.prisma.user.findUnique({
-      where: { id: dto.userId },
-    });
-    if (!student || student.role !== 'STUDENT') {
-      throw new NotFoundException('Student not found');
+    // Prevent over-allocation by using a serializable transaction + re-checking counts.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        return await this.prisma.$transaction(
+          async (tx) => {
+            const student = await tx.user.findUnique({
+              where: { id: dto.userId },
+            });
+            if (!student || student.role !== 'STUDENT') {
+              throw new NotFoundException('Student not found');
+            }
+            if (student.approvalStatus !== 'APPROVED') {
+              throw new BadRequestException(
+                'Student must be approved before room allocation',
+              );
+            }
+
+            const room = await tx.room.findUnique({
+              where: { id: dto.roomId },
+              select: { id: true, capacity: true, status: true },
+            });
+            if (!room) {
+              throw new NotFoundException('Room not found');
+            }
+            if (room.status === 'MAINTENANCE' || room.status === 'RESERVED') {
+              throw new BadRequestException(
+                `Room cannot be allocated while status is ${room.status}`,
+              );
+            }
+
+            const existing = await tx.roomAllocation.findUnique({
+              where: { userId: dto.userId },
+              select: { isActive: true },
+            });
+            if (existing?.isActive) {
+              throw new BadRequestException(
+                'Student already has a room allocated',
+              );
+            }
+
+            const activeCount = await tx.roomAllocation.count({
+              where: { roomId: dto.roomId, isActive: true },
+            });
+            if (activeCount >= room.capacity) {
+              throw new BadRequestException('Room is at full capacity');
+            }
+
+            const allocation = await tx.roomAllocation.upsert({
+              where: { userId: dto.userId },
+              update: {
+                roomId: dto.roomId,
+                isActive: true,
+                vacatedAt: null,
+                allocatedAt: new Date(),
+              },
+              create: { userId: dto.userId, roomId: dto.roomId },
+            });
+
+            const newCount = activeCount + 1;
+            await tx.room.update({
+              where: { id: dto.roomId },
+              data: {
+                status: newCount >= room.capacity ? 'OCCUPIED' : 'AVAILABLE',
+              },
+            });
+
+            return allocation;
+          },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+        );
+      } catch (error: unknown) {
+        // Retry on serialization failures (e.g. concurrent allocations)
+        const message =
+          error instanceof Error ? error.message.toLowerCase() : '';
+        if (
+          attempt < 2 &&
+          (message.includes('could not serialize') ||
+            message.includes('serialization') ||
+            message.includes('deadlock'))
+        ) {
+          continue;
+        }
+        throw error;
+      }
     }
-    if (student.approvalStatus !== 'APPROVED') {
-      throw new BadRequestException(
-        'Student must be approved before room allocation',
-      );
-    }
 
-    const room = await this.prisma.room.findUnique({
-      where: { id: dto.roomId },
-      include: { allocations: { where: { isActive: true } } },
-    });
-    if (!room) {
-      throw new NotFoundException('Room not found');
-    }
-
-    if (room.allocations.length >= room.capacity) {
-      throw new BadRequestException('Room is at full capacity');
-    }
-
-    const existing = await this.prisma.roomAllocation.findUnique({
-      where: { userId: dto.userId },
-    });
-    if (existing?.isActive) {
-      throw new BadRequestException('Student already has a room allocated');
-    }
-
-    const allocation = await this.prisma.roomAllocation.upsert({
-      where: { userId: dto.userId },
-      update: {
-        roomId: dto.roomId,
-        isActive: true,
-        vacatedAt: null,
-        allocatedAt: new Date(),
-      },
-      create: { userId: dto.userId, roomId: dto.roomId },
-    });
-
-    const activeCount = room.allocations.length + 1;
-    await this.prisma.room.update({
-      where: { id: dto.roomId },
-      data: {
-        status: activeCount >= room.capacity ? 'OCCUPIED' : 'AVAILABLE',
-      },
-    });
-
-    return allocation;
+    throw new BadRequestException('Could not allocate room, please retry');
   }
 
   async deallocate(userId: string) {
@@ -161,9 +198,16 @@ export class RoomsService {
       where: { roomId: allocation.roomId, isActive: true },
     });
 
+    const room = await this.prisma.room.findUnique({
+      where: { id: allocation.roomId },
+      select: { capacity: true },
+    });
+
     await this.prisma.room.update({
       where: { id: allocation.roomId },
-      data: { status: remaining === 0 ? 'AVAILABLE' : 'AVAILABLE' },
+      data: {
+        status: room && remaining >= room.capacity ? 'OCCUPIED' : 'AVAILABLE',
+      },
     });
 
     return { message: 'Room deallocated successfully' };

@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import { ComplaintCategory, ComplaintStatus } from '@prisma/client';
 
 export class CreateComplaintDto {
@@ -6,9 +6,13 @@ export class CreateComplaintDto {
   category: ComplaintCategory;
 
   @IsString()
+  @MinLength(5)
+  @MaxLength(120)
   title: string;
 
   @IsString()
+  @MinLength(20)
+  @MaxLength(1000)
   description: string;
 
   @IsString()

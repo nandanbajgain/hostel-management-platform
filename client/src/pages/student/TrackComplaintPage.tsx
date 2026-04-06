@@ -18,6 +18,7 @@ type TrackedComplaint = {
   description?: string
   status: ComplaintStatus
   adminNote?: string
+  roomNumber?: string | null
   createdAt: string
   updatedAt?: string
   resolvedAt?: string
@@ -26,11 +27,11 @@ type TrackedComplaint = {
 export default function TrackComplaintPage() {
   const inputRef = useRef<HTMLInputElement | null>(null)
   const [searchParams, setSearchParams] = useSearchParams()
-  const urlToken = useMemo(() => (searchParams.get('token') || '').trim().toUpperCase(), [searchParams])
+  const urlToken = useMemo(() => (searchParams.get('token') || '').trim(), [searchParams])
   const [token, setToken] = useState(() => urlToken || localStorage.getItem('lastComplaintToken') || '')
   const [submittedToken, setSubmittedToken] = useState(() => urlToken)
 
-  const normalizedToken = useMemo(() => submittedToken.trim().toUpperCase(), [submittedToken])
+  const normalizedToken = useMemo(() => submittedToken.trim().toLowerCase(), [submittedToken])
 
   const trackQuery = useQuery({
     queryKey: ['track-complaint', normalizedToken],
@@ -72,11 +73,11 @@ export default function TrackComplaintPage() {
             <input
               ref={inputRef}
               value={token}
-              onChange={(e) => setToken(e.target.value.toUpperCase())}
+              onChange={(e) => setToken(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault()
-                  const next = token.trim().toUpperCase()
+                  const next = token.trim()
                   if (!next) return
                   localStorage.setItem('lastComplaintToken', next)
                   setSubmittedToken(next)
@@ -95,7 +96,7 @@ export default function TrackComplaintPage() {
             <button
               className="btn-primary"
               onClick={() => {
-                const next = token.trim().toUpperCase()
+                const next = token.trim()
                 if (!next) return
                 localStorage.setItem('lastComplaintToken', next)
                 setSubmittedToken(next)
@@ -122,6 +123,7 @@ export default function TrackComplaintPage() {
               <div>
                 <div style={{ fontFamily: 'Sora', fontSize: 20 }}>{trackQuery.data.title}</div>
                 <div style={{ color: 'var(--text-tertiary)', marginTop: 4 }}>
+                  {trackQuery.data.roomNumber ? `Room ${trackQuery.data.roomNumber} · ` : ''}
                   {trackQuery.data.category} · {trackQuery.data.token}
                 </div>
               </div>

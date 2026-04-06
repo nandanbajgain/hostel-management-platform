@@ -78,8 +78,7 @@ export default function ComplaintsAdmin() {
               <div>
                 <div style={{ fontFamily: 'Sora', fontSize: 18 }}>{complaint.title}</div>
                 <div style={{ color: 'var(--text-tertiary)', fontSize: 13, marginTop: 4 }}>
-                  {complaint.isAnonymous ? 'Anonymous complaint' : complaint.user?.name} ·{' '}
-                  {complaint.category}
+                  {complaint.roomNumber ? `Room ${complaint.roomNumber}` : 'Room not available'} · {complaint.category}
                 </div>
               </div>
               <StatusBadge status={complaint.status} />

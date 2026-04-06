@@ -30,19 +30,19 @@ export class MaintenanceController {
   constructor(private readonly maintenanceService: MaintenanceService) {}
 
   @Get()
-  findAll(@Query('status') status?: MaintenanceStatus) {
-    return this.maintenanceService.findAll(status);
+  findAll(
+    @Req() req: { user: { id: string; role: string } },
+    @Query('status') status?: MaintenanceStatus,
+  ) {
+    return this.maintenanceService.findAllForUser(req.user, status);
   }
 
   @Post()
   create(
-    @Req() req: { user: { name: string; email: string } },
+    @Req() req: { user: { id: string; role: string; name: string; email: string } },
     @Body() dto: CreateMaintenanceDto,
   ) {
-    return this.maintenanceService.create(
-      dto,
-      `${req.user.name} (${req.user.email})`,
-    );
+    return this.maintenanceService.create(dto, req.user);
   }
 
   @Patch(':id')

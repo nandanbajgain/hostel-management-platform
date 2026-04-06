@@ -1,7 +1,13 @@
 import StatusBadge from '@/components/shared/StatusBadge'
 import type { ComplaintStatus } from '@/types'
 
-const order = ['PENDING', 'UNDER_REVIEW', 'IN_PROGRESS', 'RESOLVED']
+const order: ComplaintStatus[] = [
+  'PENDING',
+  'UNDER_REVIEW',
+  'IN_PROGRESS',
+  'RESOLVED',
+  'REJECTED',
+]
 
 export default function StatusTracker({ status }: { status: ComplaintStatus }) {
   const currentIndex = order.indexOf(status)
@@ -14,7 +20,7 @@ export default function StatusTracker({ status }: { status: ComplaintStatus }) {
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10 }}>
         {order.map((step, index) => {
-          const active = currentIndex >= index || status === 'REJECTED'
+          const active = currentIndex >= index
           return (
             <div key={step} style={{ textAlign: 'center' }}>
               <div
@@ -24,10 +30,8 @@ export default function StatusTracker({ status }: { status: ComplaintStatus }) {
                   borderRadius: '50%',
                   margin: '0 auto 8px',
                   background:
-                    status === 'REJECTED'
-                      ? index === currentIndex
-                        ? 'var(--accent-danger)'
-                        : 'rgba(148,163,184,0.3)'
+                    status === 'REJECTED' && step === 'REJECTED'
+                      ? 'var(--accent-danger)'
                       : active
                       ? 'var(--accent-primary)'
                       : 'rgba(148,163,184,0.25)',
