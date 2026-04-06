@@ -118,7 +118,7 @@ export default function StudentDashboard() {
         }}
       >
         {cleaning?.feedbackDue ? (
-          <div className="card">
+          <div className="card" style={{ padding: '16px' }}>
             <h3 style={{ fontFamily: 'Sora', fontSize: 16, marginBottom: 10 }}>Cleaning feedback</h3>
             <p style={{ marginTop: 0, color: 'var(--text-secondary)', fontSize: 13 }}>
               Was your room cleaned for the scheduled window?
@@ -161,7 +161,7 @@ export default function StudentDashboard() {
             </div>
           </div>
         ) : cleaning?.upcoming ? (
-          <div className="card">
+          <div className="card" style={{ padding: '16px' }}>
             <h3 style={{ fontFamily: 'Sora', fontSize: 16, marginBottom: 10 }}>Next room cleaning</h3>
             <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
               {formatCleaningWindow(cleaning.upcoming.scheduledStart, cleaning.upcoming.scheduledEnd) ||
@@ -177,7 +177,7 @@ export default function StudentDashboard() {
             </div>
           </div>
         ) : cleaningQuery.isError ? (
-          <div className="card">
+          <div className="card" style={{ padding: '16px' }}>
             <h3 style={{ fontFamily: 'Sora', fontSize: 16, marginBottom: 10 }}>Room cleaning</h3>
             <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
               Cleaning schedule is unavailable right now.
@@ -186,7 +186,7 @@ export default function StudentDashboard() {
         ) : null}
 
         {myRoom ? (
-          <div className="card">
+          <div className="card" style={{ padding: '16px' }}>
             <h3 style={{ fontFamily: 'Sora', fontSize: 16, marginBottom: 14 }}>Current Room</h3>
             <div
               style={{

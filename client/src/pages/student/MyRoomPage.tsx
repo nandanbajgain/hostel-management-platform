@@ -68,7 +68,7 @@ export default function MyRoomPage() {
           gap: 16,
         }}
       >
-        <div className="card">
+        <div className="card" style={{ padding: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Room Number</div>
@@ -128,7 +128,7 @@ export default function MyRoomPage() {
           </div>
         </div>
 
-        <div className="card">
+        <div className="card" style={{ padding: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
             <Users size={18} color="var(--accent-primary)" />
             <h3 style={{ fontFamily: 'Sora', fontSize: 16, margin: 0 }}>Roommates</h3>

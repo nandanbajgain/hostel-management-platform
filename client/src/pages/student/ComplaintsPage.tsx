@@ -57,7 +57,7 @@ export default function ComplaintsPage() {
       </div>
 
       {openForm ? (
-        <div className="card">
+        <div className="card" style={{ padding: '16px' }}>
           <h3 style={{ fontFamily: 'Sora', fontSize: 16, marginBottom: 16 }}>Submit Complaint</h3>
           <ComplaintForm onSuccess={() => complaintsQuery.refetch()} />
         </div>

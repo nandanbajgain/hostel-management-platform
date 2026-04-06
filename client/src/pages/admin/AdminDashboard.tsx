@@ -188,7 +188,7 @@ export default function AdminDashboard() {
           gap: 16,
         }}
       >
-        <div className="card">
+        <div className="card" style={{ padding: '16px' }}>
           <h3 style={{ fontFamily: 'Sora', fontSize: 15, fontWeight: 600, marginBottom: 16 }}>
             Complaints this week
           </h3>
@@ -210,7 +210,7 @@ export default function AdminDashboard() {
           </ResponsiveContainer>
         </div>
 
-        <div className="card">
+        <div className="card" style={{ padding: '16px' }}>
           <h3 style={{ fontFamily: 'Sora', fontSize: 15, fontWeight: 600, marginBottom: 16 }}>
             Complaints by category
           </h3>
@@ -225,7 +225,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="card">
+      <div className="card" style={{ padding: '16px' }}>
         <h3 style={{ fontFamily: 'Sora', fontSize: 15, fontWeight: 600, marginBottom: 16 }}>
           Recent Complaints
         </h3>

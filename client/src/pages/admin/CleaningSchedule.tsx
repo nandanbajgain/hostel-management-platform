@@ -147,7 +147,7 @@ export default function CleaningSchedule() {
           gap: 16,
         }}
       >
-        <div className="card">
+        <div className="card" style={{ padding: '16px' }}>
           <h3 style={{ fontFamily: 'Sora', fontSize: 16, marginTop: 0 }}>Add Staff</h3>
           <div style={{ display: 'grid', gap: 10 }}>
             <input
@@ -178,7 +178,7 @@ export default function CleaningSchedule() {
           </div>
         </div>
 
-        <div className="card">
+        <div className="card" style={{ padding: '16px' }}>
           <h3 style={{ fontFamily: 'Sora', fontSize: 16, marginTop: 0 }}>Schedule Cleaning</h3>
           <div style={{ display: 'grid', gap: 10 }}>
             <select
@@ -240,7 +240,7 @@ export default function CleaningSchedule() {
         </div>
       </div>
 
-      <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px' }}>
         <div>
           <div style={{ fontFamily: 'Sora', fontSize: 16 }}>Weekly compliance</div>
           <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
@@ -259,7 +259,7 @@ export default function CleaningSchedule() {
         </button>
       </div>
 
-      <div className="card">
+      <div className="card" style={{ padding: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h3 style={{ fontFamily: 'Sora', fontSize: 16, marginTop: 0 }}>Schedule for {date}</h3>
         </div>

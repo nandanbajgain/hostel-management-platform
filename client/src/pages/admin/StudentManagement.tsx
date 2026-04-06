@@ -338,7 +338,7 @@ export default function StudentManagement() {
 
         <div style={{ display: 'grid', gap: 16 }}>
           {selectedStudent ? (
-            <div className="card">
+            <div className="card" style={{ padding: '16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                 <GraduationCap size={18} color="var(--accent-primary)" />
                 <h3 style={{ margin: 0, fontFamily: 'Sora', fontSize: 17 }}>Student details</h3>

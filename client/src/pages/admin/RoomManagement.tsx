@@ -102,7 +102,7 @@ export default function RoomManagement() {
       ) : (
         <div style={{ display: 'grid', gap: 14 }}>
           {filteredRooms.map((room) => (
-          <div key={room.id} className="card">
+          <div key={room.id} className="card" style={{ padding: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, marginBottom: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div

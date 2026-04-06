@@ -147,7 +147,7 @@ export default function MaintenanceAdmin() {
       ) : (
         <div style={{ display: 'grid', gap: 14 }}>
           {tasks.map((task) => (
-            <div key={task.id} className="card">
+            <div key={task.id} className="card" style={{ padding: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
                 <div>
                   <div style={{ fontFamily: 'Sora', fontSize: 18 }}>{task.title}</div>
