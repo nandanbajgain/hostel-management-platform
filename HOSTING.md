@@ -79,7 +79,9 @@ SERVER_PUBLIC_URL=https://api.yourdomain.com
 - `npm run start:render` runs `prisma migrate deploy` before starting the Nest app.
 - The backend health endpoint is `GET /api/v1/health`.
 - If you use the free Render plan, the first request after inactivity may be slow because of cold starts.
-- If Cloudinary keys are missing, uploads fall back to local `/uploads` files served by the API.
+- Render’s filesystem is ephemeral by default. If you store images in local `/uploads`, they can disappear after a redeploy or instance restart (causing broken images / 404s).
+- For production uploads, set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` (recommended). If you still want local uploads in production, set `ALLOW_EPHEMERAL_UPLOADS=true` (not recommended).
+- Complaint image uploads are limited to 10MB.
 
 ### Seed the production database
 

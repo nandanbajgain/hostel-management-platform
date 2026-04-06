@@ -4,10 +4,13 @@ import { mkdir, writeFile } from 'fs/promises';
 import { randomUUID } from 'crypto';
 import { extname, join } from 'path';
 
+type UploadsProvider = 'auto' | 'cloudinary' | 'local';
+
 @Injectable()
 export class UploadService {
   private readonly logger = new Logger(UploadService.name);
   private readonly hasCloudinaryConfig: boolean;
+  private readonly uploadsProvider: UploadsProvider;
 
   constructor() {
     this.hasCloudinaryConfig = Boolean(
@@ -15,6 +18,16 @@ export class UploadService {
       process.env.CLOUDINARY_API_KEY &&
       process.env.CLOUDINARY_API_SECRET,
     );
+
+    const uploadsProviderRaw = (process.env.UPLOADS_PROVIDER || 'auto')
+      .trim()
+      .toLowerCase();
+    this.uploadsProvider =
+      uploadsProviderRaw === 'cloudinary' ||
+      uploadsProviderRaw === 'local' ||
+      uploadsProviderRaw === 'auto'
+        ? uploadsProviderRaw
+        : 'auto';
 
     cloudinary.config({
       cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -39,13 +52,33 @@ export class UploadService {
       );
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      throw new BadRequestException('Image must be under 5MB');
+    if (file.size > 10 * 1024 * 1024) {
+      throw new BadRequestException('Image must be under 10MB');
     }
 
-    if (!this.hasCloudinaryConfig) {
+    if (this.uploadsProvider === 'cloudinary' && !this.hasCloudinaryConfig) {
+      throw new BadRequestException(
+        'Uploads are set to Cloudinary, but Cloudinary env vars are missing on the server.',
+      );
+    }
+
+    const shouldUseCloudinary =
+      this.uploadsProvider === 'cloudinary' ||
+      (this.uploadsProvider === 'auto' && this.hasCloudinaryConfig);
+
+    if (!shouldUseCloudinary) {
+      const isProd = (process.env.NODE_ENV || '').toLowerCase() === 'production';
+      const allowEphemeral =
+        (process.env.ALLOW_EPHEMERAL_UPLOADS || '').toLowerCase() === 'true';
+
+      if (isProd && !allowEphemeral) {
+        throw new BadRequestException(
+          'Uploads are not configured. Set CLOUDINARY_* env vars (recommended) or set ALLOW_EPHEMERAL_UPLOADS=true to use non-persistent local uploads.',
+        );
+      }
+
       this.logger.warn(
-        'Cloudinary env vars missing, using local upload fallback.',
+        'Using local upload storage. Uploaded files may be lost on server restarts/redeploys.',
       );
       return this.uploadToLocal(file, baseUrl);
     }
