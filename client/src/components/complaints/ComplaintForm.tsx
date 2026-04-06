@@ -117,7 +117,7 @@ export default function ComplaintForm({
         </div>
       ) : null}
       <div>
-        <label style={{ display: 'block', fontSize: 13, marginBottom: 6, color: 'var(--text-secondary)' }}>
+        <label style={{ display: 'block', fontSize: 13, marginBottom: 8, color: 'var(--text-primary)', fontWeight: 600, fontFamily: 'DM Sans' }}>
           Category
         </label>
         <select
@@ -126,9 +126,11 @@ export default function ComplaintForm({
             width: '100%',
             background: 'var(--bg-tertiary)',
             border: `1px solid ${errors.category ? 'var(--accent-danger)' : 'var(--border-default)'}`,
-            borderRadius: 8,
-            padding: '10px 14px',
+            borderRadius: 10,
+            padding: '12px 14px',
             color: 'var(--text-primary)',
+            fontSize: 14,
+            transition: 'all 0.2s',
           }}
         >
           <option value="">Select category</option>
@@ -138,70 +140,81 @@ export default function ComplaintForm({
             </option>
           ))}
         </select>
-        {errors.category ? <p style={{ color: 'var(--accent-danger)', fontSize: 12, marginTop: 4 }}>{errors.category.message}</p> : null}
+        {errors.category ? <p style={{ color: 'var(--accent-danger)', fontSize: 12, marginTop: 6, fontWeight: 500 }}>{errors.category.message}</p> : null}
       </div>
 
       <div>
-        <label style={{ display: 'block', fontSize: 13, marginBottom: 6, color: 'var(--text-secondary)' }}>
+        <label style={{ display: 'block', fontSize: 13, marginBottom: 8, color: 'var(--text-primary)', fontWeight: 600, fontFamily: 'DM Sans' }}>
           Title
         </label>
         <input
           {...register('title')}
-          placeholder="Issue summary"
+          placeholder="Summarize the issue"
           style={{
             width: '100%',
             background: 'var(--bg-tertiary)',
             border: `1px solid ${errors.title ? 'var(--accent-danger)' : 'var(--border-default)'}`,
-            borderRadius: 8,
-            padding: '10px 14px',
+            borderRadius: 10,
+            padding: '12px 14px',
             color: 'var(--text-primary)',
+            fontSize: 14,
+            transition: 'all 0.2s',
           }}
         />
-        {errors.title ? <p style={{ color: 'var(--accent-danger)', fontSize: 12, marginTop: 4 }}>{errors.title.message}</p> : null}
+        {errors.title ? <p style={{ color: 'var(--accent-danger)', fontSize: 12, marginTop: 6, fontWeight: 500 }}>{errors.title.message}</p> : null}
       </div>
 
       <div>
-        <label style={{ display: 'block', fontSize: 13, marginBottom: 6, color: 'var(--text-secondary)' }}>
+        <label style={{ display: 'block', fontSize: 13, marginBottom: 8, color: 'var(--text-primary)', fontWeight: 600, fontFamily: 'DM Sans' }}>
           Description
         </label>
         <textarea
           {...register('description')}
           rows={5}
-          placeholder="Describe the issue in detail"
+          placeholder="Describe the issue in detail - what happened, when, and what's needed"
           maxLength={1000}
           style={{
             width: '100%',
             background: 'var(--bg-tertiary)',
             border: `1px solid ${errors.description ? 'var(--accent-danger)' : 'var(--border-default)'}`,
-            borderRadius: 8,
-            padding: '10px 14px',
+            borderRadius: 10,
+            padding: '12px 14px',
             color: 'var(--text-primary)',
+            fontSize: 14,
             resize: 'vertical',
             fontFamily: 'DM Sans, sans-serif',
+            transition: 'all 0.2s',
           }}
         />
-        {errors.description ? (
-          <p style={{ color: 'var(--accent-danger)', fontSize: 12, marginTop: 4 }}>
-            {errors.description.message}
-          </p>
-        ) : null}
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+          {errors.description ? (
+            <p style={{ color: 'var(--accent-danger)', fontSize: 12, margin: 0, fontWeight: 500 }}>
+              {errors.description.message}
+            </p>
+          ) : (
+            <div />
+          )}
+          <p style={{ color: 'var(--text-tertiary)', fontSize: 12, margin: 0 }}>Max 1000 chars</p>
+        </div>
       </div>
 
       <div>
-        <label style={{ display: 'block', fontSize: 13, marginBottom: 6, color: 'var(--text-secondary)' }}>
-          {anonymous ? 'Proof photo (required)' : 'Supporting Image'}
+        <label style={{ display: 'block', fontSize: 13, marginBottom: 8, color: 'var(--text-primary)', fontWeight: 600, fontFamily: 'DM Sans' }}>
+          {anonymous ? '📸 Proof Photo (required)' : '📸 Supporting Image'}
         </label>
-        <ImageUploadZone
-          imagePreview={imagePreview}
-          onDrop={(file) => {
-            setImageFile(file)
-            setImagePreview(URL.createObjectURL(file))
-          }}
-          onClear={() => {
-            setImageFile(null)
-            setImagePreview(null)
-          }}
-        />
+        <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 12, padding: '1px', border: '1px solid var(--border-default)' }}>
+          <ImageUploadZone
+            imagePreview={imagePreview}
+            onDrop={(file) => {
+              setImageFile(file)
+              setImagePreview(URL.createObjectURL(file))
+            }}
+            onClear={() => {
+              setImageFile(null)
+              setImagePreview(null)
+            }}
+          />
+        </div>
       </div>
 
       <button className="btn-primary" type="submit" disabled={loading}>

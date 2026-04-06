@@ -70,47 +70,71 @@ export default function ComplaintsPage() {
           description="If something is broken or needs attention, submit a complaint and you will be able to track its progress here."
         />
       ) : (
-        <div style={{ display: 'grid', gap: 16 }}>
+        <div style={{ display: 'grid', gap: 20 }}>
           {complaints.map((complaint) => (
-            <div key={complaint.id} className="card">
+            <div key={complaint.id} className="card-gradient" style={{ overflow: 'hidden', position: 'relative' }}>
+              {/* Background accent */}
               <div
                 style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  gap: 16,
-                  alignItems: 'flex-start',
-                  marginBottom: 14,
+                  position: 'absolute',
+                  top: -30,
+                  right: -30,
+                  width: 120,
+                  height: 120,
+                  borderRadius: '50%',
+                  background: 'rgba(108,99,255,0.1)',
+                  filter: 'blur(25px)',
+                  pointerEvents: 'none',
                 }}
-              >
-                <div>
-                  <div style={{ fontFamily: 'Sora', fontSize: 18 }}>{complaint.title}</div>
-                  <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 4 }}>
-                    {complaint.category} · Token {complaint.token}
-                  </div>
-                </div>
-                <StatusBadge status={complaint.status} />
-              </div>
-              <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.65 }}>
-                {complaint.description}
-              </p>
-              {complaint.adminNote ? (
+              />
+              
+              <div style={{ position: 'relative', zIndex: 1, padding: '1.5rem' }}>
                 <div
                   style={{
-                    marginTop: 14,
-                    padding: '0.9rem 1rem',
-                    background: 'rgba(34,211,238,0.08)',
-                    border: '1px solid rgba(34,211,238,0.16)',
-                    borderRadius: 10,
-                    color: 'var(--text-secondary)',
-                    fontSize: 13,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    gap: 16,
+                    alignItems: 'flex-start',
+                    marginBottom: 16,
                   }}
                 >
-                  <strong style={{ color: 'var(--accent-secondary)' }}>Admin note:</strong>{' '}
-                  {complaint.adminNote}
+                  <div>
+                    <div style={{ fontFamily: 'Sora', fontSize: 20, fontWeight: 600, marginBottom: 6 }}>{complaint.title}</div>
+                    <div style={{ fontSize: 13, color: 'var(--text-tertiary)', display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <span style={{ background: 'rgba(108,99,255,0.2)', padding: '2px 8px', borderRadius: 6, fontSize: 12, fontWeight: 500 }}>
+                        {complaint.category}
+                      </span>
+                      <span>Token {complaint.token.slice(0, 8)}...</span>
+                    </div>
+                  </div>
+                  <StatusBadge status={complaint.status} />
                 </div>
-              ) : null}
-              <div className="card" style={{ marginTop: 16, padding: '1.25rem' }}>
-                <StatusTracker status={complaint.status} />
+
+                <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.7, marginBottom: 16 }}>
+                  {complaint.description}
+                </p>
+
+                {complaint.adminNote ? (
+                  <div
+                    style={{
+                      marginBottom: 16,
+                      padding: '1.25rem',
+                      background: 'linear-gradient(135deg, rgba(34,211,238,0.08), rgba(34,211,238,0.04))',
+                      border: '1px solid rgba(34,211,238,0.2)',
+                      borderRadius: 12,
+                      color: 'var(--text-secondary)',
+                      fontSize: 14,
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    <div style={{ color: 'var(--accent-secondary)', fontWeight: 600, marginBottom: 6 }}>Admin Update</div>
+                    {complaint.adminNote}
+                  </div>
+                ) : null}
+
+                <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 12, padding: '1.25rem', border: '1px solid var(--border-default)' }}>
+                  <StatusTracker status={complaint.status} />
+                </div>
               </div>
             </div>
           ))}
