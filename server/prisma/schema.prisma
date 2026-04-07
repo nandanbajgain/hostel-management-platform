@@ -13,6 +13,7 @@ enum Role {
   STUDENT
   WARDEN
   ADMIN
+  COUNSELLOR
 }
 
 enum Gender {
@@ -67,6 +68,27 @@ enum CleaningAssignmentStatus {
   CANCELLED
 }
 
+enum SessionStatus {
+  OPEN
+  ACTIVE
+  CLOSED
+  ARCHIVED
+}
+
+enum Mood {
+  ANXIOUS
+  SAD
+  STRESSED
+  OKAY
+  GOOD
+}
+
+enum MessageType {
+  TEXT
+  RESOURCE
+  NOTE
+}
+
 model User {
   id              String         @id @default(uuid())
   name            String
@@ -93,7 +115,9 @@ model User {
   maintenanceTasks MaintenanceTask[] @relation("MaintenanceCreatedBy")
   notifications   Notification[]
   cleaningFeedback CleaningFeedback[]
-
+  counsellorProfile CounsellorProfile?
+  studentSessions CounsellingSession[] @relation("StudentSessions")
+  sentMessages CounsellingMessage[] @relation("SentMessages")
   @@map("users")
 }
 
@@ -255,4 +279,62 @@ model KnowledgeBase {
   createdAt DateTime @default(now())
 
   @@map("knowledge_base")
+}
+
+model CounsellorProfile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio          String?
+  specialties  String[]
+  availability String?
+  isOnline     Boolean  @default(false)
+  sessions     CounsellingSession[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("counsellor_profiles")
+}
+
+model CounsellingSession {
+  id             String    @id @default(cuid())
+  studentId      String
+  counsellorId   String
+  student        User      @relation("StudentSessions", fields: [studentId], references: [id], onDelete: Cascade)
+  counsellor     CounsellorProfile @relation(fields: [counsellorId], references: [id], onDelete: Cascade)
+  status         SessionStatus @default(OPEN)
+  topic          String?
+  mood           Mood?
+  startedAt      DateTime  @default(now())
+  closedAt       DateTime?
+  messages       CounsellingMessage[]
+  sessionNotes   String?
+  followUpDate   DateTime?
+  rating         Int?
+  ratingComment  String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([studentId])
+  @@index([counsellorId])
+  @@index([status])
+  @@map("counselling_sessions")
+}
+
+model CounsellingMessage {
+  id          String   @id @default(cuid())
+  sessionId   String
+  session     CounsellingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  senderId    String
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  content     String
+  type        MessageType @default(TEXT)
+  isRead      Boolean  @default(false)
+  sentAt      DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([senderId])
+  @@index([isRead])
+  @@map("counselling_messages")
 }

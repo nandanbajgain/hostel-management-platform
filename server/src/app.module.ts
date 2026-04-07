@@ -7,6 +7,7 @@ import { AnnouncementsModule } from './modules/announcements/announcements.modul
 import { ChatbotModule } from './modules/chatbot/chatbot.module';
 import { CleaningModule } from './modules/cleaning/cleaning.module';
 import { ComplaintsModule } from './modules/complaints/complaints.module';
+import { CounsellingModule } from './modules/counselling/counselling.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { MaintenanceModule } from './modules/maintenance/maintenance.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
@@ -41,6 +42,7 @@ import { PrismaModule } from './prisma/prisma.module';
     MaintenanceModule,
     AnnouncementsModule,
     DashboardModule,
+    CounsellingModule,
   ],
   controllers: [AppController],
   providers: [],

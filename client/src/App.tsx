@@ -22,6 +22,8 @@ import MaintenanceAdmin from '@/pages/admin/MaintenanceAdmin'
 import StudentManagement from '@/pages/admin/StudentManagement'
 import CleaningSchedule from '@/pages/admin/CleaningSchedule'
 import WardenDashboard from '@/pages/warden/WardenDashboard'
+import { StudentChatPage } from '@/pages/counselling/StudentChatPage'
+import { CounsellorDashboard } from '@/pages/counselling/CounsellorDashboard'
 
 function ProtectedRoute({
   children,
@@ -137,6 +139,22 @@ export default function App() {
                 element={
                   <ProtectedRoute roles={['ADMIN', 'WARDEN']}>
                     <StudentManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="counselling"
+                element={
+                  <ProtectedRoute roles={['STUDENT']}>
+                    <StudentChatPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="counsellor/dashboard"
+                element={
+                  <ProtectedRoute roles={['COUNSELLOR']}>
+                    <CounsellorDashboard />
                   </ProtectedRoute>
                 }
               />

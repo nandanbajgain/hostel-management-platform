@@ -289,8 +289,42 @@ async function main() {
     await prisma.knowledgeBase.create({ data: entry });
   }
 
+  // Seed counsellor
+  const counsellor = await prisma.user.upsert({
+    where: { email: 'counsellor@sau.ac.in' },
+    update: {},
+    create: {
+      name: 'Dr. Priya Sharma',
+      email: 'counsellor@sau.ac.in',
+      role: 'COUNSELLOR',
+      password: await hash('counsellor123'),
+      avatarUrl: 'https://placehold.co/200x200/png',
+      enrollmentNo: 'COUNSELLOR-001',
+      course: 'Student Wellbeing & Counselling',
+      gender: 'FEMALE',
+      sportsInterests: ['Yoga', 'Meditation'],
+      careerGoal: 'Support student mental health and wellbeing',
+      address: 'Counselling Center, SAU',
+      parentContactNo: '+91-9999999990',
+      approvalStatus: 'APPROVED',
+      approvedAt: new Date(),
+    },
+  });
+
+  await prisma.counsellorProfile.upsert({
+    where: { userId: counsellor.id },
+    update: {},
+    create: {
+      userId: counsellor.id,
+      bio: 'Experienced student wellbeing counsellor with 8 years helping students navigate hostel life, academic pressure, and personal growth.',
+      specialties: ['Academic Stress', 'Homesickness', 'Anxiety', 'Conflict Resolution', 'Personal Growth'],
+      availability: 'Monday to Friday, 9:00 AM – 5:00 PM',
+      isOnline: true,
+    },
+  });
+
   console.log(
-    'Seed complete. Demo credentials:\n  Admin: admin@sau.ac.in / admin123\n  Warden: warden@sau.ac.in / warden123\n  Student: student@sau.ac.in / student123',
+    'Seed complete. Demo credentials:\n  Admin: admin@sau.ac.in / admin123\n  Warden: warden@sau.ac.in / warden123\n  Student: student@sau.ac.in / student123\n  Counsellor: counsellor@sau.ac.in / counsellor123',
   );
 }
 

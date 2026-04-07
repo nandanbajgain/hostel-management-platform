@@ -23,10 +23,13 @@ export class RegisterDto {
   @MinLength(6)
   password: string;
 
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
   @IsEnum(Role)
   @IsOptional()
-  })
-  phone: string;
+  role?: Role;
 
   @IsUrl({ require_protocol: true })
   avatarUrl: string;

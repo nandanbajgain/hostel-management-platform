@@ -1,4 +1,4 @@
-export type Role = 'STUDENT' | 'WARDEN' | 'ADMIN'
+export type Role = 'STUDENT' | 'WARDEN' | 'ADMIN' | 'COUNSELLOR'
 export type Gender = 'MALE' | 'FEMALE' | 'OTHER'
 export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
 export type RoomStatus = 'AVAILABLE' | 'OCCUPIED' | 'MAINTENANCE' | 'RESERVED'
@@ -119,4 +119,52 @@ export interface ChatMessage {
     type: string | null
     score: number
   }>
+}
+
+// Counselling types
+export type SessionStatus = 'OPEN' | 'ACTIVE' | 'CLOSED' | 'ARCHIVED'
+export type Mood = 'ANXIOUS' | 'SAD' | 'STRESSED' | 'OKAY' | 'GOOD'
+export type MessageType = 'TEXT' | 'RESOURCE' | 'NOTE'
+
+export interface CounsellorProfile {
+  id: string
+  userId: string
+  bio?: string
+  specialties: string[]
+  availability?: string
+  isOnline: boolean
+  createdAt: string
+  updatedAt: string
+  user: User
+}
+
+export interface CounsellingMessage {
+  id: string
+  sessionId: string
+  senderId: string
+  sender?: User
+  content: string
+  type: MessageType
+  isRead: boolean
+  sentAt: string
+}
+
+export interface CounsellingSession {
+  id: string
+  studentId: string
+  counsellorId: string
+  student?: User
+  counsellor?: CounsellorProfile
+  status: SessionStatus
+  topic?: string
+  mood?: Mood
+  startedAt: string
+  closedAt?: string | null
+  messages?: CounsellingMessage[]
+  sessionNotes?: string
+  followUpDate?: string | null
+  rating?: number | null
+  ratingComment?: string | null
+  createdAt: string
+  updatedAt: string
 }
