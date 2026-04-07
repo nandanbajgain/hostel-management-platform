@@ -228,7 +228,23 @@ export class CounsellingService {
   async setCounsellorOnlineStatus(userId: string, isOnline: boolean) {
     return this.prisma.counsellorProfile.update({
       where: { userId },
-      data: { isOnline },
+      data: {
+        isOnline,
+        lastSeenAt: new Date(),
+        currentStatus: isOnline ? 'available' : 'offline',
+      },
+    });
+  }
+
+  async setCounsellorStatus(userId: string, status: 'available' | 'busy' | 'away' | 'offline') {
+    const isOnline = status !== 'offline';
+    return this.prisma.counsellorProfile.update({
+      where: { userId },
+      data: {
+        currentStatus: status,
+        isOnline,
+        lastSeenAt: new Date(),
+      },
     });
   }
 
@@ -253,7 +269,10 @@ export class CounsellingService {
         senderId: { not: userId },
         isRead: false,
       },
-      data: { isRead: true },
+      data: {
+        isRead: true,
+        readAt: new Date(),
+      },
     });
   }
 
@@ -297,4 +316,23 @@ export class CounsellingService {
       ).length,
     };
   }
-}
+
+  async getSessionsWithUnreadMessages(counsellorId: string) {
+    const sessions = await this.prisma.counsellingSession.findMany({
+      where: { counsellorId },
+      include: {
+        student: true,
+        messages: {
+          where: { isRead: false, senderId: { not: counsellorId } },
+          orderBy: { sentAt: 'desc' },
+        },
+      },
+      orderBy: { startedAt: 'desc' },
+    });
+
+    return sessions.map((session) => ({
+      ...session,
+      unreadCount: session.messages.length,
+      lastMessage: session.messages[0] || null,
+    }));
+  }

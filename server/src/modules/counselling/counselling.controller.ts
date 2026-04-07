@@ -161,4 +161,28 @@ export class CounsellingController {
       await this.counsellingService.getCounsellorProfile(req.user.id);
     return this.counsellingService.getCounsellorStats(counsellorProfile.id);
   }
+
+  @Patch('status')
+  @Roles('COUNSELLOR')
+  @UseGuards(RolesGuard)
+  async updateStatus(
+    @Req() req: AuthenticatedRequest,
+    @Body() data: { status: 'available' | 'busy' | 'away' | 'offline' },
+  ) {
+    return this.counsellingService.setCounsellorStatus(req.user.id, data.status);
+  }
+
+  @Get('unread-sessions')
+  @Roles('COUNSELLOR')
+  @UseGuards(RolesGuard)
+  async getUnreadSessions(@Req() req: AuthenticatedRequest) {
+    const counsellorProfile =
+      await this.counsellingService.getCounsellorProfile(req.user.id);
+    return this.counsellingService.getSessionsWithUnreadMessages(counsellorProfile.id);
+  }
+
+  @Patch('sessions/:id/mark-read')
+  async markSessionRead(@Param('id') sessionId: string, @Req() req: AuthenticatedRequest) {
+    return this.counsellingService.markMessagesAsRead(sessionId, req.user.id);
+  }
 }
