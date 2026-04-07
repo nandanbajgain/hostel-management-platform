@@ -336,3 +336,4 @@ export class CounsellingService {
       lastMessage: session.messages[0] || null,
     }));
   }
+}
