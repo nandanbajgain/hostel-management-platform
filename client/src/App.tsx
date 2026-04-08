@@ -24,6 +24,10 @@ import CleaningSchedule from '@/pages/admin/CleaningSchedule'
 import WardenDashboard from '@/pages/warden/WardenDashboard'
 import { StudentChatPage } from '@/pages/counselling/StudentChatPage'
 import { CounsellorDashboard } from '@/pages/counselling/CounsellorDashboard'
+import LeaveApplicationPage from '@/pages/student/LeaveApplicationPage'
+import LeaveHistoryPage from '@/pages/student/LeaveHistoryPage'
+import WardenLeavesPage from '@/pages/warden/WardenLeavesPage'
+import AdminLeavesPage from '@/pages/admin/AdminLeavesPage'
 
 function ProtectedRoute({
   children,
@@ -157,6 +161,38 @@ export default function App() {
                 element={
                   <ProtectedRoute roles={['COUNSELLOR']}>
                     <CounsellorDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="leaves"
+                element={
+                  <ProtectedRoute roles={['STUDENT']}>
+                    <LeaveApplicationPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="leaves/history"
+                element={
+                  <ProtectedRoute roles={['STUDENT']}>
+                    <LeaveHistoryPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="warden/leaves"
+                element={
+                  <ProtectedRoute roles={['WARDEN']}>
+                    <WardenLeavesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin/leaves"
+                element={
+                  <ProtectedRoute roles={['ADMIN']}>
+                    <AdminLeavesPage />
                   </ProtectedRoute>
                 }
               />

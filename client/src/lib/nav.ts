@@ -11,6 +11,7 @@ import {
   Search,
   UserCheck,
   Wrench,
+  CheckSquare,
 } from 'lucide-react'
 
 export type NavItem = { to: string; icon: LucideIcon; label: string }
@@ -18,6 +19,8 @@ export type NavItem = { to: string; icon: LucideIcon; label: string }
 const studentNav: NavItem[] = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/my-room', icon: Home, label: 'My Room' },
+  { to: '/leaves', icon: CheckSquare, label: 'Apply for Leave' },
+  { to: '/leaves/history', icon: CalendarDays, label: 'My Leaves' },
   { to: '/complaints', icon: AlertCircle, label: 'My Complaints' },
   { to: '/complaints/anonymous', icon: EyeOff, label: 'Report Anonymously' },
   { to: '/counselling', icon: Heart, label: 'Talk to Counsellor' },
@@ -29,6 +32,7 @@ const adminNav: NavItem[] = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/rooms', icon: BedDouble, label: 'Room Management' },
   { to: '/admin/complaints', icon: AlertCircle, label: 'Complaints' },
+  { to: '/admin/leaves', icon: CalendarDays, label: 'Leave Requests' },
   { to: '/cleaning', icon: CalendarDays, label: 'Cleaning Schedule' },
   { to: '/students', icon: UserCheck, label: 'Students' },
   { to: '/maintenance', icon: Wrench, label: 'Maintenance' },
@@ -37,6 +41,7 @@ const adminNav: NavItem[] = [
 const wardenNav: NavItem[] = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/rooms', icon: BedDouble, label: 'Rooms' },
+  { to: '/warden/leaves', icon: CalendarDays, label: 'Leave Requests' },
   { to: '/admin/complaints', icon: AlertCircle, label: 'Complaints' },
   { to: '/cleaning', icon: CalendarDays, label: 'Cleaning Schedule' },
   { to: '/students', icon: UserCheck, label: 'Students' },

@@ -7,7 +7,6 @@ datasource db {
   provider          = "postgresql"
   url               = env("DATABASE_URL")
   directUrl         = env("DATABASE_URL_DIRECT")
-  
 }
 
 enum Role {
@@ -90,6 +89,22 @@ enum MessageType {
   NOTE
 }
 
+enum LeaveType {
+  HOME
+  MEDICAL
+  PERSONAL
+  EMERGENCY
+  OTHER
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED_BY_WARDEN
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
 model User {
   id              String         @id @default(uuid())
   name            String
@@ -119,6 +134,7 @@ model User {
   counsellorProfile CounsellorProfile?
   studentSessions CounsellingSession[] @relation("StudentSessions")
   sentMessages CounsellingMessage[] @relation("SentMessages")
+  leaves Leave[]
   @@map("users")
 }
 
@@ -339,4 +355,27 @@ model CounsellingMessage {
   @@index([senderId])
   @@index([isRead])
   @@map("counselling_messages")
+}
+
+model Leave {
+  id            String      @id @default(cuid())
+  studentId     String
+  student       User        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  reason        String
+  leaveType     LeaveType
+  fromDate      DateTime
+  toDate        DateTime
+  destination   String
+  contactNumber String
+  parentContact String
+  status        LeaveStatus @default(PENDING)
+  wardenRemark  String?
+  adminRemark   String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([studentId])
+  @@index([status])
+  @@index([fromDate])
+  @@map("leaves")
 }

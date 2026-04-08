@@ -7,11 +7,6 @@ import {
   Phone,
   MoreVertical,
   CheckCheck,
-  User,
-  Clock,
-  Users,
-  Star,
-  TrendingUp,
 } from 'lucide-react';
 import {
   useCounsellorDashboard,
