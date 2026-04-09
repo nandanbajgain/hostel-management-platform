@@ -84,6 +84,11 @@ export function CounsellorDashboardV2() {
     s.student?.name?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
+  const getSessionPreview = (session: CounsellingSession) => {
+    const lastMessage = session.messages?.[session.messages.length - 1];
+    return lastMessage?.content || session.topic || 'General session';
+  };
+
   const formatTime = (date: string | Date) => {
     return new Date(date).toLocaleTimeString([], {
       hour: '2-digit',
@@ -92,12 +97,12 @@ export function CounsellorDashboardV2() {
   };
 
   return (
-    <div className="flex h-screen bg-white overflow-hidden">
+    <div className="w-full h-[calc(100vh-6rem)] lg:h-[calc(100vh-8rem)] overflow-hidden rounded-2xl border border-white/10 shadow-xl bg-white/80 backdrop-blur-md">
       {/* Left Sidebar - Sessions List */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+      <div className="w-80 bg-white/70 border-r border-gray-200/70 flex flex-col">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Messages</h1>
+        <div className="p-4 border-b border-gray-200/70 bg-gradient-to-b from-white/90 to-white/60">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4 tracking-tight">Counselling</h1>
           <div className="relative">
             <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
             <input
@@ -105,25 +110,25 @@ export function CounsellorDashboardV2() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search students..."
-              className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-full text-gray-900 placeholder-gray-500 caret-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-white/90 border border-gray-200/80 rounded-full text-gray-900 placeholder-gray-500 caret-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-300 text-sm transition-all shadow-sm"
             />
           </div>
         </div>
 
         {/* Stats Bar */}
-        <div className="px-4 py-3 bg-gradient-to-r from-teal-50 to-blue-50 border-b border-gray-200 grid grid-cols-2 gap-2">
-          <div className="bg-white rounded-lg p-2 text-center">
+        <div className="px-4 py-3 bg-gradient-to-r from-teal-50/80 to-blue-50/70 border-b border-gray-200/70 grid grid-cols-2 gap-2">
+          <div className="bg-white/90 rounded-xl p-3 text-center border border-gray-200/60 shadow-sm">
             <div className="text-xs text-gray-500">Open</div>
-            <div className="text-lg font-bold text-teal-600">{stats?.openSessions || 0}</div>
+            <div className="text-xl font-bold text-teal-600 leading-tight">{stats?.openSessions || 0}</div>
           </div>
-          <div className="bg-white rounded-lg p-2 text-center">
-            <div className="text-xs text-gray-500">This Week</div>
-            <div className="text-lg font-bold text-teal-600">{stats?.thisWeekSessions || 0}</div>
+          <div className="bg-white/90 rounded-xl p-3 text-center border border-gray-200/60 shadow-sm">
+            <div className="text-xs text-gray-500">This week</div>
+            <div className="text-xl font-bold text-teal-600 leading-tight">{stats?.thisWeekSessions || 0}</div>
           </div>
         </div>
 
         {/* Sessions List */}
-        <div className="flex-1 overflow-y-auto space-y-1 p-2">
+        <div className="flex-1 overflow-y-auto space-y-2 p-3">
           <AnimatePresence>
             {filteredSessions.length > 0 ? (
               filteredSessions.map((session: CounsellingSession) => (
@@ -133,10 +138,10 @@ export function CounsellorDashboardV2() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   onClick={() => setSelectedSessionId(session.id)}
-                  className={`w-full p-3 rounded-lg text-left transition-all ${
+                  className={`w-full p-3 rounded-2xl text-left transition-all border shadow-sm ${
                     selectedSessionId === session.id
-                      ? 'bg-teal-100 hover:bg-teal-100'
-                      : 'hover:bg-gray-100'
+                      ? 'bg-gradient-to-r from-teal-50 to-blue-50 border-teal-200/80 ring-1 ring-teal-400/20'
+                      : 'bg-white/80 border-gray-200/70 hover:bg-white'
                   }`}
                 >
                   <div className="flex items-center gap-3 mb-2">
@@ -144,10 +149,8 @@ export function CounsellorDashboardV2() {
                       {session.student?.name?.charAt(0) || 'S'}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm">{session.student?.name}</p>
-                      <p className="text-xs text-gray-500 truncate">
-                        {session.messages?.[0]?.content || session.topic || 'General session'}
-                      </p>
+                      <p className="font-semibold text-gray-900 text-sm truncate">{session.student?.name}</p>
+                      <p className="text-xs text-gray-500 truncate">{getSessionPreview(session)}</p>
                     </div>
                   </div>
                   <div className="flex justify-between items-center text-xs">
@@ -182,14 +185,14 @@ export function CounsellorDashboardV2() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col bg-gradient-to-br from-blue-50 to-teal-50">
+      <div className="flex-1 flex flex-col bg-[radial-gradient(ellipse_at_top,rgba(45,212,191,0.10),transparent_55%),radial-gradient(ellipse_at_bottom,rgba(59,130,246,0.10),transparent_55%)]">
         {selectedSession ? (
           <>
             {/* Chat Header */}
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm"
+              className="bg-white/85 backdrop-blur-md border-b border-gray-200/70 px-6 py-4 flex items-center justify-between shadow-sm"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center text-white font-bold">
@@ -235,10 +238,10 @@ export function CounsellorDashboardV2() {
                       className={`flex ${msg.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
                     >
                       <div
-                        className={`max-w-xs px-4 py-3 rounded-2xl shadow-sm ${
+                        className={`max-w-[min(34rem,85%)] px-4 py-3 rounded-2xl shadow-sm ${
                           msg.senderId === user?.id
-                            ? 'bg-teal-500 text-white'
-                            : 'bg-white text-gray-900 border border-gray-200'
+                            ? 'bg-gradient-to-br from-teal-500 to-blue-500 text-white'
+                            : 'bg-white/85 backdrop-blur-sm text-gray-900 border border-white/60'
                         }`}
                       >
                         <p className="leading-relaxed break-words">{msg.content}</p>
