@@ -2,90 +2,132 @@
 
 /**
  * Migration wrapper for Render deployment
- * Attempts to run migrations with timeout handling
+ * Attempts to resolve failed migrations and run migrations with timeout handling
  * If migrations fail/timeout, continues with app startup
  */
 
 const { spawn } = require('child_process');
 const path = require('path');
 
-console.log('[Migration Wrapper] Starting migration attempt...');
-
-const migrate = spawn('npx', ['prisma', 'migrate', 'deploy'], {
-  stdio: 'inherit',
-  timeout: 30000, // 30 second timeout
-});
+console.log('[Render Migration] Starting migration process...');
+console.log('[Render Migration] Environment: NODE_ENV=' + process.env.NODE_ENV);
+console.log('[Render Migration] Current working directory:', process.cwd());
 
 let migrationComplete = false;
 let migrationSuccess = false;
 
-migrate.on('close', (code) => {
-  migrationComplete = true;
-  migrationSuccess = code === 0;
+// Step 1: Try to resolve any failed migrations
+const resolveFailedMigrations = new Promise((resolve) => {
+  console.log('[Render Migration] Step 1: Attempting to resolve any failed migrations...');
   
-  if (migrationSuccess) {
-    console.log('[Migration Wrapper] ✓ Migrations applied successfully');
-    runSeed();
-  } else {
-    console.warn('[Migration Wrapper] ⚠ Migrations failed or timed out, continuing with startup');
-    startApp();
-  }
+  const resolve_cmd = spawn('npx', ['prisma', 'migrate', 'resolve', '--rolled-back', '20260407154231'], {
+    stdio: 'inherit',
+    shell: true,
+  });
+
+  const resolveTimeout = setTimeout(() => {
+    console.warn('[Render Migration] Resolve command timeout, skipping');
+    resolve_cmd.kill();
+    resolve();
+  }, 15000);
+
+  resolve_cmd.on('close', (code) => {
+    clearTimeout(resolveTimeout);
+    if (code === 0 || code === 1) { // 0 = success, 1 = already resolved/no failed migrations
+      console.log('[Render Migration] ✓ Ready to deploy migrations');
+    } else {
+      console.warn('[Render Migration] ⚠ Resolve returned code', code);
+    }
+    resolve();
+  });
+
+  resolve_cmd.on('error', (err) => {
+    clearTimeout(resolveTimeout);
+    console.warn('[Render Migration] Resolve error:', err.message);
+    resolve();
+  });
 });
 
-migrate.on('error', (error) => {
-  console.warn('[Migration Wrapper] Migration process error:', error.message);
-  migrationComplete = true;
-  startApp();
-});
+// Step 2: Deploy migrations
+resolveFailedMigrations.then(() => {
+  console.log('[Render Migration] Step 2: Deploying migrations...');
+  
+  const migrate = spawn('npx', ['prisma', 'migrate', 'deploy', '--skip-generate'], {
+    stdio: 'inherit',
+    shell: true,
+  });
 
-// Force app startup after timeout if migration hangs
-setTimeout(() => {
-  if (!migrationComplete) {
-    console.warn('[Migration Wrapper] ⚠ Migration timeout (30s), forcing app startup');
+  const migrateTimeout = setTimeout(() => {
+    console.warn('[Render Migration] Migration deploy timeout (30s), forcing app startup');
     migrate.kill();
     migrationComplete = true;
     startApp();
-  }
-}, 30000);
+  }, 30000);
+
+  migrate.on('close', (code) => {
+    clearTimeout(migrateTimeout);
+    migrationComplete = true;
+    migrationSuccess = code === 0;
+    
+    if (migrationSuccess) {
+      console.log('[Render Migration] ✓ Migrations applied successfully');
+      runSeed();
+    } else {
+      console.warn('[Render Migration] ⚠ Migrations failed with code ' + code + ', continuing with app startup');
+      startApp();
+    }
+  });
+
+  migrate.on('error', (error) => {
+    clearTimeout(migrateTimeout);
+    console.warn('[Render Migration] Migration process error:', error.message);
+    migrationComplete = true;
+    startApp();
+  });
+});
 
 function runSeed() {
-  console.log('[Migration Wrapper] Running database seed...');
+  console.log('[Render Migration] Step 3: Running database seed...');
   
   const seed = spawn('npx', ['prisma', 'db', 'seed'], {
     stdio: 'inherit',
-    timeout: 15000, // 15 second timeout for seed
+    shell: true,
   });
 
+  const seedTimeout = setTimeout(() => {
+    console.warn('[Render Migration] Seed timeout (15s), forcing app startup');
+    seed.kill();
+    startApp();
+  }, 15000);
+
   seed.on('close', (code) => {
+    clearTimeout(seedTimeout);
     if (code === 0) {
-      console.log('[Migration Wrapper] ✓ Database seeded successfully');
+      console.log('[Render Migration] ✓ Database seeded successfully');
     } else {
-      console.warn('[Migration Wrapper] ⚠ Seed failed, continuing with startup');
+      console.warn('[Render Migration] ⚠ Seed failed with code ' + code);
     }
     startApp();
   });
 
   seed.on('error', (error) => {
-    console.warn('[Migration Wrapper] Seed error:', error.message);
+    clearTimeout(seedTimeout);
+    console.warn('[Render Migration] Seed error:', error.message);
     startApp();
   });
-
-  // Force app startup after seed timeout
-  setTimeout(() => {
-    console.warn('[Migration Wrapper] ⚠ Seed timeout (15s), forcing app startup');
-    seed.kill();
-    startApp();
-  }, 15000);
 }
 
 function startApp() {
-  console.log('[Migration Wrapper] Starting NestJS application...');
-  const app = spawn('node', ['dist/main'], {
+  console.log('[Render Migration] Starting NestJS application...');
+  console.log('[Render Migration] Executing: node dist/main.js');
+  
+  const app = spawn('node', ['dist/main.js'], {
     stdio: 'inherit',
+    shell: true,
   });
 
   app.on('error', (error) => {
-    console.error('[Migration Wrapper] Failed to start app:', error);
+    console.error('[Render Migration] Failed to start app:', error);
     process.exit(1);
   });
 }
