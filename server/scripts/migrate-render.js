@@ -79,8 +79,8 @@ function runSeed() {
 }
 
 function startApp() {
-  console.log('[Migration Wrapper] Starting Next.js application...');
-  const app = spawn('node', ['dist/src/main'], {
+  console.log('[Migration Wrapper] Starting NestJS application...');
+  const app = spawn('node', ['dist/main'], {
     stdio: 'inherit',
   });
 
