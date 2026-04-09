@@ -56,23 +56,25 @@ export default function CampusHealthStudentPage() {
   const [leaveDocUrl, setLeaveDocUrl] = useState('')
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto text-slate-100">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Campus Health</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-100">Campus Health</h1>
+          <p className="text-slate-400 mt-1">
             Appointments, records, prescriptions, and insurance—centralized for students.
           </p>
         </div>
       </div>
 
-      <div className="mt-6 bg-white/85 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-sm p-2 flex flex-wrap gap-2">
+      <div className="mt-6 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl shadow-sm p-2 flex flex-wrap gap-2">
         {tabs.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
             className={`px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition-all ${
-              tab === t.id ? 'bg-gray-900 text-white' : 'text-gray-800 hover:bg-gray-100'
+              tab === t.id
+                ? 'bg-gradient-to-r from-teal-500 to-blue-500 text-white shadow-md'
+                : 'text-slate-200 hover:bg-white/5'
             }`}
           >
             <t.icon className="w-4 h-4" />
@@ -83,17 +85,17 @@ export default function CampusHealthStudentPage() {
 
       {tab === 'book' ? (
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
-            <h2 className="text-lg font-bold text-gray-900">Book an appointment</h2>
-            <p className="text-sm text-gray-600 mt-1">Pick a doctor and a slot from their availability.</p>
+          <div className="bg-white/5 border border-white/10 rounded-2xl shadow-sm p-5">
+            <h2 className="text-lg font-bold text-slate-100">Book an appointment</h2>
+            <p className="text-sm text-slate-400 mt-1">Pick a doctor and a slot from their availability.</p>
 
             <div className="mt-4 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Doctor</label>
+                <label className="block text-sm font-semibold text-slate-200 mb-2">Doctor</label>
                 <select
                   value={doctorId}
                   onChange={(e) => setDoctorId(e.target.value)}
-                  className="w-full bg-white px-4 py-3 border border-gray-300 rounded-2xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-300"
+                  className="w-full bg-white/5 px-4 py-3 border border-white/10 rounded-2xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-300"
                 >
                   <option value="">Select a doctor</option>
                   {doctors.map((d) => (
@@ -103,37 +105,37 @@ export default function CampusHealthStudentPage() {
                   ))}
                 </select>
                 {doctorId ? (
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="text-xs text-slate-400 mt-2">
                     {doctors.find((d) => d.id === doctorId)?.availabilityNote || 'Availability not set'}
                   </p>
                 ) : null}
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Reason (optional)</label>
+                <label className="block text-sm font-semibold text-slate-200 mb-2">Reason (optional)</label>
                 <textarea
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   rows={3}
                   placeholder="e.g., fever, headache, stress…"
-                  className="w-full bg-white px-4 py-3 border border-gray-300 rounded-2xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-300"
+                  className="w-full bg-white/5 px-4 py-3 border border-white/10 rounded-2xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-300"
                 />
               </div>
 
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm text-gray-600">Slots window</p>
+                <p className="text-sm text-slate-400">Slots window</p>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setSlotFromDays((v) => Math.max(0, v - 7))}
-                    className="px-3 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-sm font-semibold"
+                    className="px-3 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-sm font-semibold text-slate-100"
                   >
                     Prev
                   </button>
                   <button
                     type="button"
                     onClick={() => setSlotFromDays((v) => v + 7)}
-                    className="px-3 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-sm font-semibold"
+                    className="px-3 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-sm font-semibold text-slate-100"
                   >
                     Next
                   </button>
@@ -142,9 +144,9 @@ export default function CampusHealthStudentPage() {
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
-            <h2 className="text-lg font-bold text-gray-900">Available slots</h2>
-            <p className="text-sm text-gray-600 mt-1">Click a slot to request booking.</p>
+          <div className="bg-white/5 border border-white/10 rounded-2xl shadow-sm p-5">
+            <h2 className="text-lg font-bold text-slate-100">Available slots</h2>
+            <p className="text-sm text-slate-400 mt-1">Click a slot to request booking.</p>
 
             <div className="mt-4 space-y-2 max-h-[480px] overflow-y-auto pr-2">
               {doctorId ? (
@@ -167,19 +169,19 @@ export default function CampusHealthStudentPage() {
                         }
                       }}
                       disabled={createAppointment.isPending}
-                      className="w-full text-left px-4 py-3 rounded-2xl border border-gray-200 hover:border-teal-300 hover:bg-teal-50 transition-all flex items-center justify-between"
+                      className="w-full text-left px-4 py-3 rounded-2xl border border-white/10 hover:border-teal-300 hover:bg-teal-500/10 transition-all flex items-center justify-between bg-white/5"
                     >
-                      <span className="text-sm font-semibold text-gray-900">
+                      <span className="text-sm font-semibold text-slate-100">
                         {new Date(s).toLocaleString()}
                       </span>
-                      <span className="text-xs text-gray-600">Request</span>
+                      <span className="text-xs text-slate-400">Request</span>
                     </button>
                   ))
                 ) : (
-                  <p className="text-sm text-gray-500">No slots available in this window.</p>
+                  <p className="text-sm text-slate-400">No slots available in this window.</p>
                 )
               ) : (
-                <p className="text-sm text-gray-500">Select a doctor to see slots.</p>
+                <p className="text-sm text-slate-400">Select a doctor to see slots.</p>
               )}
             </div>
           </div>
@@ -187,69 +189,69 @@ export default function CampusHealthStudentPage() {
       ) : null}
 
       {tab === 'appointments' ? (
-        <div className="mt-6 bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
-          <h2 className="text-lg font-bold text-gray-900">My appointments</h2>
+        <div className="mt-6 bg-white/5 border border-white/10 rounded-2xl shadow-sm p-5">
+          <h2 className="text-lg font-bold text-slate-100">My appointments</h2>
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             {myAppointments.length ? (
               myAppointments.map((a) => (
-                <div key={a.id} className="border border-gray-200 rounded-2xl p-4 bg-white">
+                <div key={a.id} className="border border-white/10 rounded-2xl p-4 bg-white/5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="font-semibold text-gray-900 truncate">{a.doctor?.user?.name || 'Doctor'}</p>
-                      <p className="text-sm text-gray-600 mt-1">{new Date(a.scheduledAt).toLocaleString()}</p>
-                      {a.reason ? <p className="text-sm text-gray-600 mt-2 line-clamp-3">{a.reason}</p> : null}
+                      <p className="font-semibold text-slate-100 truncate">{a.doctor?.user?.name || 'Doctor'}</p>
+                      <p className="text-sm text-slate-400 mt-1">{new Date(a.scheduledAt).toLocaleString()}</p>
+                      {a.reason ? <p className="text-sm text-slate-300 mt-2 line-clamp-3">{a.reason}</p> : null}
                     </div>
-                    <span className="text-[11px] px-2 py-0.5 rounded-full border bg-gray-50 text-gray-700 border-gray-200 flex-shrink-0">
+                    <span className="text-[11px] px-2 py-0.5 rounded-full border bg-white/5 text-slate-200 border-white/10 flex-shrink-0">
                       {a.status}
                     </span>
                   </div>
                   {a.record?.diagnosis ? (
-                    <div className="mt-3 text-sm text-gray-700">
-                      <span className="font-semibold">Diagnosis:</span> {a.record.diagnosis}
+                    <div className="mt-3 text-sm text-slate-200">
+                      <span className="font-semibold text-slate-100">Diagnosis:</span> {a.record.diagnosis}
                     </div>
                   ) : null}
                 </div>
               ))
             ) : (
-              <p className="text-sm text-gray-500">No appointments yet.</p>
+              <p className="text-sm text-slate-400">No appointments yet.</p>
             )}
           </div>
         </div>
       ) : null}
 
       {tab === 'prescriptions' ? (
-        <div className="mt-6 bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
-          <h2 className="text-lg font-bold text-gray-900">Prescriptions</h2>
+        <div className="mt-6 bg-white/5 border border-white/10 rounded-2xl shadow-sm p-5">
+          <h2 className="text-lg font-bold text-slate-100">Prescriptions</h2>
           <div className="mt-4 space-y-4">
             {myPrescriptions.length ? (
               myPrescriptions.map((p) => (
-                <div key={p.id} className="border border-gray-200 rounded-2xl p-4 bg-white">
+                <div key={p.id} className="border border-white/10 rounded-2xl p-4 bg-white/5">
                   <div className="flex items-center justify-between">
-                    <p className="font-semibold text-gray-900">Prescription</p>
-                    <span className="text-[11px] px-2 py-0.5 rounded-full border bg-gray-50 text-gray-700 border-gray-200">
+                    <p className="font-semibold text-slate-100">Prescription</p>
+                    <span className="text-[11px] px-2 py-0.5 rounded-full border bg-white/5 text-slate-200 border-white/10">
                       {p.status}
                     </span>
                   </div>
-                  {p.notes ? <p className="text-sm text-gray-600 mt-2">{p.notes}</p> : null}
+                  {p.notes ? <p className="text-sm text-slate-300 mt-2">{p.notes}</p> : null}
                   <div className="mt-3 space-y-2">
                     {(p.items || []).map((it) => (
                       <div key={it.id} className="flex items-start justify-between gap-3 text-sm">
                         <div className="min-w-0">
-                          <p className="font-semibold text-gray-900 truncate">{it.medicineName}</p>
-                          <p className="text-gray-600">
+                          <p className="font-semibold text-slate-100 truncate">{it.medicineName}</p>
+                          <p className="text-slate-300">
                             {[it.dosage, it.frequency, it.durationDays ? `${it.durationDays} days` : null]
                               .filter(Boolean)
                               .join(' • ')}
                           </p>
                         </div>
-                        {it.quantity ? <span className="text-gray-700">x{it.quantity}</span> : null}
+                        {it.quantity ? <span className="text-slate-200">x{it.quantity}</span> : null}
                       </div>
                     ))}
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-gray-500">No prescriptions yet.</p>
+              <p className="text-sm text-slate-400">No prescriptions yet.</p>
             )}
           </div>
         </div>
@@ -257,29 +259,29 @@ export default function CampusHealthStudentPage() {
 
       {tab === 'insurance' ? (
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
-            <h2 className="text-lg font-bold text-gray-900">Submit insurance claim</h2>
-            <p className="text-sm text-gray-600 mt-1">Admin will review and process your reimbursement.</p>
+          <div className="bg-white/5 border border-white/10 rounded-2xl shadow-sm p-5">
+            <h2 className="text-lg font-bold text-slate-100">Submit insurance claim</h2>
+            <p className="text-sm text-slate-400 mt-1">Admin will review and process your reimbursement.</p>
 
             <div className="mt-4 space-y-3">
               <input
                 value={claimAmount}
                 onChange={(e) => setClaimAmount(e.target.value)}
                 placeholder="Amount (e.g., 1200)"
-                className="w-full bg-white px-4 py-3 border border-gray-300 rounded-2xl text-gray-900 placeholder-gray-500"
+                className="w-full bg-white/5 px-4 py-3 border border-white/10 rounded-2xl text-slate-100 placeholder-slate-500"
               />
               <textarea
                 value={claimDesc}
                 onChange={(e) => setClaimDesc(e.target.value)}
                 rows={4}
                 placeholder="Description (optional)"
-                className="w-full bg-white px-4 py-3 border border-gray-300 rounded-2xl text-gray-900 placeholder-gray-500"
+                className="w-full bg-white/5 px-4 py-3 border border-white/10 rounded-2xl text-slate-100 placeholder-slate-500"
               />
               <input
                 value={claimBillUrl}
                 onChange={(e) => setClaimBillUrl(e.target.value)}
                 placeholder="Bill URL (optional)"
-                className="w-full bg-white px-4 py-3 border border-gray-300 rounded-2xl text-gray-900 placeholder-gray-500"
+                className="w-full bg-white/5 px-4 py-3 border border-white/10 rounded-2xl text-slate-100 placeholder-slate-500"
               />
               <button
                 type="button"
@@ -299,31 +301,35 @@ export default function CampusHealthStudentPage() {
                   }
                 }}
                 disabled={createClaim.isPending}
-                className="w-full bg-gray-900 hover:bg-black text-white font-bold py-3 rounded-full transition-all"
+                className="w-full bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white font-bold py-3 rounded-full transition-all shadow-md"
               >
                 {createClaim.isPending ? 'Submitting…' : 'Submit claim'}
               </button>
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
-            <h2 className="text-lg font-bold text-gray-900">My claims</h2>
+          <div className="bg-white/5 border border-white/10 rounded-2xl shadow-sm p-5">
+            <h2 className="text-lg font-bold text-slate-100">My claims</h2>
             <div className="mt-4 space-y-3">
               {myClaims.length ? (
                 myClaims.map((c) => (
-                  <div key={c.id} className="border border-gray-200 rounded-2xl p-4">
+                  <div key={c.id} className="border border-white/10 rounded-2xl p-4 bg-white/5">
                     <div className="flex items-center justify-between gap-3">
-                      <p className="font-semibold text-gray-900">{c.amount ? `₹${c.amount}` : 'Claim'}</p>
-                      <span className="text-[11px] px-2 py-0.5 rounded-full border bg-gray-50 text-gray-700 border-gray-200">
+                      <p className="font-semibold text-slate-100">{c.amount ? `₹${c.amount}` : 'Claim'}</p>
+                      <span className="text-[11px] px-2 py-0.5 rounded-full border bg-white/5 text-slate-200 border-white/10">
                         {c.status}
                       </span>
                     </div>
-                    {c.description ? <p className="text-sm text-gray-600 mt-2">{c.description}</p> : null}
-                    {c.adminNote ? <p className="text-sm text-gray-700 mt-2"><span className="font-semibold">Admin:</span> {c.adminNote}</p> : null}
+                    {c.description ? <p className="text-sm text-slate-300 mt-2">{c.description}</p> : null}
+                    {c.adminNote ? (
+                      <p className="text-sm text-slate-200 mt-2">
+                        <span className="font-semibold text-slate-100">Admin:</span> {c.adminNote}
+                      </p>
+                    ) : null}
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-gray-500">No claims yet.</p>
+                <p className="text-sm text-slate-400">No claims yet.</p>
               )}
             </div>
           </div>
@@ -332,9 +338,9 @@ export default function CampusHealthStudentPage() {
 
       {tab === 'medical' ? (
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
-            <h2 className="text-lg font-bold text-gray-900">Medical leave request</h2>
-            <p className="text-sm text-gray-600 mt-1">Submit documents for admin verification.</p>
+          <div className="bg-white/5 border border-white/10 rounded-2xl shadow-sm p-5">
+            <h2 className="text-lg font-bold text-slate-100">Medical leave request</h2>
+            <p className="text-sm text-slate-400 mt-1">Submit documents for admin verification.</p>
 
             <div className="mt-4 space-y-3">
               <div className="grid grid-cols-2 gap-3">
@@ -342,13 +348,13 @@ export default function CampusHealthStudentPage() {
                   type="date"
                   value={leaveFrom}
                   onChange={(e) => setLeaveFrom(e.target.value)}
-                  className="w-full bg-white px-4 py-3 border border-gray-300 rounded-2xl text-gray-900"
+                  className="w-full bg-white/5 px-4 py-3 border border-white/10 rounded-2xl text-slate-100"
                 />
                 <input
                   type="date"
                   value={leaveTo}
                   onChange={(e) => setLeaveTo(e.target.value)}
-                  className="w-full bg-white px-4 py-3 border border-gray-300 rounded-2xl text-gray-900"
+                  className="w-full bg-white/5 px-4 py-3 border border-white/10 rounded-2xl text-slate-100"
                 />
               </div>
               <textarea
@@ -356,13 +362,13 @@ export default function CampusHealthStudentPage() {
                 onChange={(e) => setLeaveReason(e.target.value)}
                 rows={4}
                 placeholder="Reason"
-                className="w-full bg-white px-4 py-3 border border-gray-300 rounded-2xl text-gray-900 placeholder-gray-500"
+                className="w-full bg-white/5 px-4 py-3 border border-white/10 rounded-2xl text-slate-100 placeholder-slate-500"
               />
               <input
                 value={leaveDocUrl}
                 onChange={(e) => setLeaveDocUrl(e.target.value)}
                 placeholder="Document URL (optional)"
-                className="w-full bg-white px-4 py-3 border border-gray-300 rounded-2xl text-gray-900 placeholder-gray-500"
+                className="w-full bg-white/5 px-4 py-3 border border-white/10 rounded-2xl text-slate-100 placeholder-slate-500"
               />
               <button
                 type="button"
@@ -384,37 +390,37 @@ export default function CampusHealthStudentPage() {
                   }
                 }}
                 disabled={createMedicalLeave.isPending}
-                className="w-full bg-gray-900 hover:bg-black text-white font-bold py-3 rounded-full transition-all"
+                className="w-full bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white font-bold py-3 rounded-full transition-all shadow-md"
               >
                 {createMedicalLeave.isPending ? 'Submitting…' : 'Submit'}
               </button>
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
-            <h2 className="text-lg font-bold text-gray-900">My requests</h2>
+          <div className="bg-white/5 border border-white/10 rounded-2xl shadow-sm p-5">
+            <h2 className="text-lg font-bold text-slate-100">My requests</h2>
             <div className="mt-4 space-y-3">
               {myMedicalLeave.length ? (
                 myMedicalLeave.map((r) => (
-                  <div key={r.id} className="border border-gray-200 rounded-2xl p-4">
+                  <div key={r.id} className="border border-white/10 rounded-2xl p-4 bg-white/5">
                     <div className="flex items-center justify-between gap-3">
-                      <p className="font-semibold text-gray-900">
+                      <p className="font-semibold text-slate-100">
                         {new Date(r.fromDate).toLocaleDateString()} → {new Date(r.toDate).toLocaleDateString()}
                       </p>
-                      <span className="text-[11px] px-2 py-0.5 rounded-full border bg-gray-50 text-gray-700 border-gray-200">
+                      <span className="text-[11px] px-2 py-0.5 rounded-full border bg-white/5 text-slate-200 border-white/10">
                         {r.status}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mt-2">{r.reason}</p>
+                    <p className="text-sm text-slate-300 mt-2">{r.reason}</p>
                     {r.adminNote ? (
-                      <p className="text-sm text-gray-700 mt-2">
-                        <span className="font-semibold">Admin:</span> {r.adminNote}
+                      <p className="text-sm text-slate-200 mt-2">
+                        <span className="font-semibold text-slate-100">Admin:</span> {r.adminNote}
                       </p>
                     ) : null}
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-gray-500">No medical leave requests yet.</p>
+                <p className="text-sm text-slate-400">No medical leave requests yet.</p>
               )}
             </div>
           </div>
@@ -423,4 +429,3 @@ export default function CampusHealthStudentPage() {
     </div>
   )
 }
-

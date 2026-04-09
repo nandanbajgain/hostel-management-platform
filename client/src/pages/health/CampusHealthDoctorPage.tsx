@@ -74,19 +74,21 @@ export default function CampusHealthDoctorPage() {
   })
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto text-slate-100">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Campus Health • Doctor</h1>
-          <p className="text-gray-600 mt-1">Manage appointments, availability, and visit records.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-100">Campus Health • Doctor</h1>
+          <p className="text-slate-400 mt-1">Manage appointments, availability, and visit records.</p>
         </div>
       </div>
 
-      <div className="mt-6 bg-white/85 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-sm p-2 flex flex-wrap gap-2">
+      <div className="mt-6 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl shadow-sm p-2 flex flex-wrap gap-2">
         <button
           onClick={() => setTab('appointments')}
           className={`px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition-all ${
-            tab === 'appointments' ? 'bg-gray-900 text-white' : 'text-gray-800 hover:bg-gray-100'
+            tab === 'appointments'
+              ? 'bg-gradient-to-r from-teal-500 to-blue-500 text-white shadow-md'
+              : 'text-slate-200 hover:bg-white/5'
           }`}
         >
           <Calendar className="w-4 h-4" /> Appointments
@@ -94,7 +96,9 @@ export default function CampusHealthDoctorPage() {
         <button
           onClick={() => setTab('records')}
           className={`px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition-all ${
-            tab === 'records' ? 'bg-gray-900 text-white' : 'text-gray-800 hover:bg-gray-100'
+            tab === 'records'
+              ? 'bg-gradient-to-r from-teal-500 to-blue-500 text-white shadow-md'
+              : 'text-slate-200 hover:bg-white/5'
           }`}
         >
           <ClipboardSignature className="w-4 h-4" /> Records
@@ -102,7 +106,9 @@ export default function CampusHealthDoctorPage() {
         <button
           onClick={() => setTab('availability')}
           className={`px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition-all ${
-            tab === 'availability' ? 'bg-gray-900 text-white' : 'text-gray-800 hover:bg-gray-100'
+            tab === 'availability'
+              ? 'bg-gradient-to-r from-teal-500 to-blue-500 text-white shadow-md'
+              : 'text-slate-200 hover:bg-white/5'
           }`}
         >
           <Settings className="w-4 h-4" /> Availability
@@ -110,25 +116,25 @@ export default function CampusHealthDoctorPage() {
       </div>
 
       {tab === 'appointments' ? (
-        <div className="mt-6 bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
-          <h2 className="text-lg font-bold text-gray-900">Upcoming</h2>
+        <div className="mt-6 bg-white/5 border border-white/10 rounded-2xl shadow-sm p-5">
+          <h2 className="text-lg font-bold text-slate-100">Upcoming</h2>
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             {appointments.length ? (
               appointments.map((a) => (
-                <div key={a.id} className="border border-gray-200 rounded-2xl p-4">
+                <div key={a.id} className="border border-white/10 rounded-2xl p-4 bg-white/5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="font-semibold text-gray-900 truncate">{a.student?.name || 'Student'}</p>
-                      <p className="text-sm text-gray-600 mt-1">{new Date(a.scheduledAt).toLocaleString()}</p>
-                      {a.reason ? <p className="text-sm text-gray-700 mt-2 line-clamp-3">{a.reason}</p> : null}
+                      <p className="font-semibold text-slate-100 truncate">{a.student?.name || 'Student'}</p>
+                      <p className="text-sm text-slate-400 mt-1">{new Date(a.scheduledAt).toLocaleString()}</p>
+                      {a.reason ? <p className="text-sm text-slate-200 mt-2 line-clamp-3">{a.reason}</p> : null}
                     </div>
-                    <span className="text-[11px] px-2 py-0.5 rounded-full border bg-gray-50 text-gray-700 border-gray-200">
+                    <span className="text-[11px] px-2 py-0.5 rounded-full border bg-white/5 text-slate-200 border-white/10">
                       {a.status}
                     </span>
                   </div>
                   <button
                     type="button"
-                    className="mt-3 w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 rounded-xl transition-all"
+                    className="mt-3 w-full bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white font-bold py-2 rounded-xl transition-all shadow-md"
                     onClick={() => {
                       setRecordDraft((d: any) => ({
                         ...d,
@@ -157,7 +163,7 @@ export default function CampusHealthDoctorPage() {
                 </div>
               ))
             ) : (
-              <p className="text-sm text-gray-500">No appointments.</p>
+              <p className="text-sm text-slate-400">No appointments.</p>
             )}
           </div>
         </div>
@@ -165,53 +171,53 @@ export default function CampusHealthDoctorPage() {
 
       {tab === 'records' ? (
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
-            <h2 className="text-lg font-bold text-gray-900">Visit record</h2>
-            <p className="text-sm text-gray-600 mt-1">Fill details and issue prescription.</p>
+          <div className="bg-white/5 border border-white/10 rounded-2xl shadow-sm p-5">
+            <h2 className="text-lg font-bold text-slate-100">Visit record</h2>
+            <p className="text-sm text-slate-400 mt-1">Fill details and issue prescription.</p>
 
             <div className="mt-4 space-y-3">
               <input
                 value={recordDraft.appointmentId}
                 onChange={(e) => setRecordDraft((d: any) => ({ ...d, appointmentId: e.target.value }))}
                 placeholder="Appointment ID"
-                className="w-full bg-white px-4 py-3 border border-gray-300 rounded-2xl text-gray-900 placeholder-gray-500"
+                className="w-full bg-white/5 px-4 py-3 border border-white/10 rounded-2xl text-slate-100 placeholder-slate-500"
               />
               <textarea
                 value={recordDraft.symptoms}
                 onChange={(e) => setRecordDraft((d: any) => ({ ...d, symptoms: e.target.value }))}
                 rows={3}
                 placeholder="Symptoms"
-                className="w-full bg-white px-4 py-3 border border-gray-300 rounded-2xl text-gray-900 placeholder-gray-500"
+                className="w-full bg-white/5 px-4 py-3 border border-white/10 rounded-2xl text-slate-100 placeholder-slate-500"
               />
               <textarea
                 value={recordDraft.diagnosis}
                 onChange={(e) => setRecordDraft((d: any) => ({ ...d, diagnosis: e.target.value }))}
                 rows={3}
                 placeholder="Diagnosis"
-                className="w-full bg-white px-4 py-3 border border-gray-300 rounded-2xl text-gray-900 placeholder-gray-500"
+                className="w-full bg-white/5 px-4 py-3 border border-white/10 rounded-2xl text-slate-100 placeholder-slate-500"
               />
               <textarea
                 value={recordDraft.treatmentPlan}
                 onChange={(e) => setRecordDraft((d: any) => ({ ...d, treatmentPlan: e.target.value }))}
                 rows={3}
                 placeholder="Treatment plan"
-                className="w-full bg-white px-4 py-3 border border-gray-300 rounded-2xl text-gray-900 placeholder-gray-500"
+                className="w-full bg-white/5 px-4 py-3 border border-white/10 rounded-2xl text-slate-100 placeholder-slate-500"
               />
               <textarea
                 value={recordDraft.doctorNotes}
                 onChange={(e) => setRecordDraft((d: any) => ({ ...d, doctorNotes: e.target.value }))}
                 rows={3}
                 placeholder="Doctor notes"
-                className="w-full bg-white px-4 py-3 border border-gray-300 rounded-2xl text-gray-900 placeholder-gray-500"
+                className="w-full bg-white/5 px-4 py-3 border border-white/10 rounded-2xl text-slate-100 placeholder-slate-500"
               />
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
-            <h2 className="text-lg font-bold text-gray-900">Prescription</h2>
+          <div className="bg-white/5 border border-white/10 rounded-2xl shadow-sm p-5">
+            <h2 className="text-lg font-bold text-slate-100">Prescription</h2>
             <div className="mt-4 space-y-3">
               {recordDraft.prescriptionItems.map((it: any, idx: number) => (
-                <div key={idx} className="border border-gray-200 rounded-2xl p-4">
+                <div key={idx} className="border border-white/10 rounded-2xl p-4 bg-white/5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <select
                       value={it.medicineId}
@@ -223,7 +229,7 @@ export default function CampusHealthDoctorPage() {
                           return { ...d, prescriptionItems: next }
                         })
                       }}
-                      className="w-full bg-white px-3 py-2 border border-gray-300 rounded-xl text-gray-900"
+                      className="w-full bg-white/5 px-3 py-2 border border-white/10 rounded-xl text-slate-100"
                     >
                       <option value="">Select medicine (optional)</option>
                       {medicines.map((m: any) => (
@@ -242,7 +248,7 @@ export default function CampusHealthDoctorPage() {
                         })
                       }}
                       placeholder="Medicine name"
-                      className="w-full bg-white px-3 py-2 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500"
+                      className="w-full bg-white/5 px-3 py-2 border border-white/10 rounded-xl text-slate-100 placeholder-slate-500"
                     />
                     <input
                       value={it.dosage}
@@ -254,7 +260,7 @@ export default function CampusHealthDoctorPage() {
                         })
                       }}
                       placeholder="Dosage"
-                      className="w-full bg-white px-3 py-2 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500"
+                      className="w-full bg-white/5 px-3 py-2 border border-white/10 rounded-xl text-slate-100 placeholder-slate-500"
                     />
                     <input
                       value={it.frequency}
@@ -266,7 +272,7 @@ export default function CampusHealthDoctorPage() {
                         })
                       }}
                       placeholder="Frequency"
-                      className="w-full bg-white px-3 py-2 border border-gray-300 rounded-xl text-gray-900 placeholder-gray-500"
+                      className="w-full bg-white/5 px-3 py-2 border border-white/10 rounded-xl text-slate-100 placeholder-slate-500"
                     />
                     <input
                       type="number"
@@ -279,7 +285,7 @@ export default function CampusHealthDoctorPage() {
                         })
                       }}
                       placeholder="Days"
-                      className="w-full bg-white px-3 py-2 border border-gray-300 rounded-xl text-gray-900"
+                      className="w-full bg-white/5 px-3 py-2 border border-white/10 rounded-xl text-slate-100"
                     />
                     <input
                       type="number"
@@ -292,7 +298,7 @@ export default function CampusHealthDoctorPage() {
                         })
                       }}
                       placeholder="Quantity"
-                      className="w-full bg-white px-3 py-2 border border-gray-300 rounded-xl text-gray-900"
+                      className="w-full bg-white/5 px-3 py-2 border border-white/10 rounded-xl text-slate-100"
                     />
                   </div>
                 </div>
@@ -307,7 +313,7 @@ export default function CampusHealthDoctorPage() {
                       prescriptionItems: [...d.prescriptionItems, { medicineName: '', medicineId: '', dosage: '', frequency: '', durationDays: 5, quantity: 1 }],
                     }))
                   }
-                  className="px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-sm font-semibold"
+                  className="px-4 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-sm font-semibold text-slate-100"
                 >
                   Add item
                 </button>
@@ -331,7 +337,7 @@ export default function CampusHealthDoctorPage() {
                     }
                   }}
                   disabled={!recordDraft.appointmentId || upsertRecord.isPending}
-                  className="flex-1 bg-gray-900 hover:bg-black text-white font-bold py-2 rounded-xl transition-all"
+                  className="flex-1 bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white font-bold py-2 rounded-xl transition-all shadow-md"
                 >
                   {upsertRecord.isPending ? 'Saving…' : 'Save record'}
                 </button>
@@ -342,9 +348,9 @@ export default function CampusHealthDoctorPage() {
       ) : null}
 
       {tab === 'availability' ? (
-        <div className="mt-6 bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
-          <h2 className="text-lg font-bold text-gray-900">Weekly availability</h2>
-          <p className="text-sm text-gray-600 mt-1">Set one block per day (MVP). Times are local.</p>
+        <div className="mt-6 bg-white/5 border border-white/10 rounded-2xl shadow-sm p-5">
+          <h2 className="text-lg font-bold text-slate-100">Weekly availability</h2>
+          <p className="text-sm text-slate-400 mt-1">Set one block per day (MVP). Times are local.</p>
 
           <div className="mt-4 space-y-3">
             {days.map((label, dayOfWeek) => {
@@ -354,9 +360,9 @@ export default function CampusHealthDoctorPage() {
               const end = minsToTime(block.endMinute)
 
               return (
-                <div key={label} className="border border-gray-200 rounded-2xl p-4 flex items-center gap-3 flex-wrap">
-                  <div className="w-14 font-bold text-gray-900">{label}</div>
-                  <label className="inline-flex items-center gap-2 text-sm font-semibold text-gray-800">
+                <div key={label} className="border border-white/10 rounded-2xl p-4 flex items-center gap-3 flex-wrap bg-white/5">
+                  <div className="w-14 font-bold text-slate-100">{label}</div>
+                  <label className="inline-flex items-center gap-2 text-sm font-semibold text-slate-200">
                     <input
                       type="checkbox"
                       checked={block.isActive}
@@ -379,9 +385,9 @@ export default function CampusHealthDoctorPage() {
                           [dayOfWeek]: { ...prev[dayOfWeek], startMinute: timeToMins(e.target.value) },
                         }))
                       }}
-                      className="px-3 py-2 border border-gray-300 rounded-xl"
+                      className="px-3 py-2 border border-white/10 rounded-xl bg-white/5 text-slate-100"
                     />
-                    <span className="text-gray-500">to</span>
+                    <span className="text-slate-400">to</span>
                     <input
                       type="time"
                       value={end}
@@ -391,7 +397,7 @@ export default function CampusHealthDoctorPage() {
                           [dayOfWeek]: { ...prev[dayOfWeek], endMinute: timeToMins(e.target.value) },
                         }))
                       }}
-                      className="px-3 py-2 border border-gray-300 rounded-xl"
+                      className="px-3 py-2 border border-white/10 rounded-xl bg-white/5 text-slate-100"
                     />
                   </div>
                 </div>
@@ -410,7 +416,7 @@ export default function CampusHealthDoctorPage() {
               }
             }}
             disabled={replaceAvail.isPending}
-            className="mt-4 bg-gray-900 hover:bg-black text-white font-bold py-3 px-6 rounded-full"
+            className="mt-4 bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white font-bold py-3 px-6 rounded-full shadow-md"
           >
             {replaceAvail.isPending ? 'Saving…' : 'Save availability'}
           </button>
