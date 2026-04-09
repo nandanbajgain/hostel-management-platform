@@ -4,6 +4,7 @@
 @tailwind utilities;
 
 :root {
+  color-scheme: dark;
   /* Primary Colors */
   --bg-primary: #0A0F1E;
   --bg-secondary: #111827;
@@ -51,6 +52,17 @@ body {
   font-family: 'DM Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure native dropdown option text is visible in dark UI */
+select {
+  color-scheme: dark;
+}
+
+select option,
+select optgroup {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 /* Scrollbar Styling */

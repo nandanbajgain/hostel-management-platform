@@ -405,7 +405,7 @@ export function StudentChatPageV2() {
                 : 'Your message will be sent when your counsellor is online...'
             }
             disabled={!activeSessionId}
-            className="flex-1 px-5 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all disabled:bg-gray-100"
+            className="flex-1 px-5 py-3 border border-gray-300 rounded-full text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all disabled:bg-gray-100"
           />
           <motion.button
             whileHover={{ scale: 1.05 }}

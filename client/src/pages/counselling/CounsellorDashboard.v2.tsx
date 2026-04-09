@@ -105,7 +105,7 @@ export function CounsellorDashboardV2() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search students..."
-              className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-full text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm transition-all"
             />
           </div>
         </div>
@@ -290,7 +290,7 @@ export function CounsellorDashboardV2() {
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder="Type your message..."
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-full text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
                 />
                 <motion.button
                   whileHover={{ scale: 1.05 }}
