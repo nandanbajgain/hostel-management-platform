@@ -12,6 +12,8 @@ import {
   Phone,
   Award,
   ChevronRight,
+  Calendar,
+  BookOpen,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import {
@@ -19,6 +21,10 @@ import {
   useMySessionS,
   useCreateSession,
   useSendMessage,
+  useSessionAppointments,
+  useCreateAppointment,
+  useMyJournalEntries,
+  useCreateJournalEntry,
 } from '../../hooks/useCounsellingSession';
 import { useSessionSocket } from '../../hooks/useSessionSocket';
 import { useCounsellingStore } from '../../store/counsellingSlice';
@@ -36,12 +42,19 @@ export function StudentChatPageV2() {
   const { user } = useAuth();
   const { activeSessionId, setActiveSessionId } = useCounsellingStore();
   const [showMoodSelector, setShowMoodSelector] = useState(false);
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [showJournalModal, setShowJournalModal] = useState(false);
   const [messages, setMessages] = useState<CounsellingMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [counsellorProfile, setCounsellorProfile] = useState<CounsellorProfileData | null>(null);
+  const [appointmentAt, setAppointmentAt] = useState('');
+  const [appointmentNote, setAppointmentNote] = useState('');
+  const [journalTitle, setJournalTitle] = useState('');
+  const [journalContent, setJournalContent] = useState('');
+  const [journalShared, setJournalShared] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -49,6 +62,10 @@ export function StudentChatPageV2() {
   const { data: sessions } = useMySessionS();
   const createSessionMutation = useCreateSession();
   const sendMessageMutation = useSendMessage();
+  const { data: appointments = [] } = useSessionAppointments(activeSessionId);
+  const createAppointmentMutation = useCreateAppointment();
+  const { data: journalEntries = [] } = useMyJournalEntries();
+  const createJournalMutation = useCreateJournalEntry();
 
   // Socket setup
   useSessionSocket({
@@ -141,6 +158,19 @@ export function StudentChatPageV2() {
       minute: '2-digit',
     });
   };
+
+  const formatDateTime = (date: string | Date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(date));
+  };
+
+  const nextAppointment = appointments
+    .filter((a: any) => a.status !== 'CANCELLED' && new Date(a.scheduledAt).getTime() >= Date.now())
+    .sort((a: any, b: any) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())[0];
 
   const formatRecentDate = (date: string | Date) => {
     return new Intl.DateTimeFormat('en-US', {
@@ -251,6 +281,18 @@ export function StudentChatPageV2() {
                   <p className="text-xs font-semibold text-gray-700">{item.label}</p>
                 </div>
               ))}
+            </div>
+
+            {/* Quick Actions */}
+            <div className="flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowJournalModal(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 border border-gray-200/70 shadow-sm hover:shadow transition-all text-sm font-semibold text-gray-800"
+              >
+                <BookOpen className="w-4 h-4 text-teal-600" />
+                Journal
+              </button>
             </div>
 
             {/* Recent Sessions */}
@@ -369,6 +411,24 @@ export function StudentChatPageV2() {
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
             <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowJournalModal(true)}
+              className="px-3 py-2 bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-all shadow-sm flex items-center gap-2"
+            >
+              <BookOpen className="w-4 h-4 text-gray-700" />
+              <span className="text-sm font-semibold text-gray-800 hidden sm:inline">Journal</span>
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowAppointmentModal(true)}
+              className="px-3 py-2 bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-all shadow-sm flex items-center gap-2"
+            >
+              <Calendar className="w-4 h-4 text-gray-700" />
+              <span className="text-sm font-semibold text-gray-800 hidden sm:inline">Appointment</span>
+            </motion.button>
+            <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               className="p-2 hover:bg-gray-100 rounded-lg transition-all"
@@ -399,8 +459,241 @@ export function StudentChatPageV2() {
         )}
       </motion.div>
 
+      <AnimatePresence>
+        {showAppointmentModal ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setShowAppointmentModal(false);
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.97, y: 10, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.97, y: 10, opacity: 0 }}
+              className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-gray-200 p-6 relative"
+            >
+              <button
+                type="button"
+                onClick={() => setShowAppointmentModal(false)}
+                className="absolute right-4 top-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+
+              <h2 className="text-xl font-bold text-gray-900">Request an appointment</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Pick a time that works for you. Your counsellor can confirm or reschedule.
+              </p>
+
+              <div className="mt-5 space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">Preferred time</label>
+                  <input
+                    type="datetime-local"
+                    value={appointmentAt}
+                    onChange={(e) => setAppointmentAt(e.target.value)}
+                    className="w-full bg-white px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-300 text-gray-900"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">Uses your device time zone.</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">Notes (optional)</label>
+                  <textarea
+                    value={appointmentNote}
+                    onChange={(e) => setAppointmentNote(e.target.value)}
+                    rows={4}
+                    placeholder="Anything you want your counsellor to know…"
+                    className="w-full bg-white px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-300 text-gray-900 placeholder-gray-500"
+                  />
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  disabled={!appointmentAt || createAppointmentMutation.isPending}
+                  onClick={async () => {
+                    if (!activeSessionId) return;
+                    await createAppointmentMutation.mutateAsync({
+                      sessionId: activeSessionId,
+                      data: {
+                        scheduledAt: new Date(appointmentAt).toISOString(),
+                        note: appointmentNote || undefined,
+                      },
+                    });
+                    setAppointmentNote('');
+                    setShowAppointmentModal(false);
+                  }}
+                  className="w-full mt-2 bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 disabled:opacity-60 text-white font-bold py-3 rounded-full transition-all shadow-lg"
+                >
+                  {createAppointmentMutation.isPending ? 'Requesting…' : 'Send request'}
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showJournalModal ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setShowJournalModal(false);
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.97, y: 10, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.97, y: 10, opacity: 0 }}
+              className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-gray-200 p-6 relative"
+            >
+              <button
+                type="button"
+                onClick={() => setShowJournalModal(false)}
+                className="absolute right-4 top-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Journal</h2>
+                  <p className="text-sm text-gray-600 mt-1">A private space to reflect. Share only if you want.</p>
+                </div>
+                <label className="inline-flex items-center gap-2 text-sm font-semibold text-gray-800 select-none">
+                  <input
+                    type="checkbox"
+                    checked={journalShared}
+                    onChange={(e) => setJournalShared(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                  />
+                  Share with counsellor
+                </label>
+              </div>
+
+              <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">Title (optional)</label>
+                    <input
+                      value={journalTitle}
+                      onChange={(e) => setJournalTitle(e.target.value)}
+                      placeholder="e.g., Feeling overwhelmed"
+                      className="w-full bg-white px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-300 text-gray-900 placeholder-gray-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">Entry</label>
+                    <textarea
+                      value={journalContent}
+                      onChange={(e) => setJournalContent(e.target.value)}
+                      rows={10}
+                      placeholder="Write freely…"
+                      className="w-full bg-white px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-300 text-gray-900 placeholder-gray-500"
+                    />
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    disabled={!journalContent.trim() || createJournalMutation.isPending}
+                    onClick={async () => {
+                      await createJournalMutation.mutateAsync({
+                        title: journalTitle.trim() || undefined,
+                        content: journalContent.trim(),
+                        isShared: journalShared,
+                        sessionId: activeSessionId || undefined,
+                      });
+                      setJournalTitle('');
+                      setJournalContent('');
+                      setJournalShared(false);
+                    }}
+                    className="w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white font-bold py-3 rounded-full transition-all shadow-md"
+                  >
+                    {createJournalMutation.isPending ? 'Saving…' : 'Save entry'}
+                  </motion.button>
+                </div>
+
+                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 overflow-hidden">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="font-bold text-gray-900">Recent entries</p>
+                    <p className="text-xs text-gray-500">{journalEntries.length}</p>
+                  </div>
+                  <div className="space-y-3 max-h-[420px] overflow-y-auto pr-2">
+                    {journalEntries.length === 0 ? (
+                      <p className="text-sm text-gray-500">No entries yet.</p>
+                    ) : (
+                      journalEntries.slice(0, 12).map((entry: any) => (
+                        <div key={entry.id} className="bg-white border border-gray-200 rounded-xl p-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="font-semibold text-gray-900 text-sm truncate">
+                              {entry.title || 'Journal entry'}
+                            </p>
+                            <span className="text-[11px] text-gray-500 flex-shrink-0">
+                              {formatDateTime(entry.createdAt)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 mt-1 line-clamp-3">{entry.content}</p>
+                          {entry.isShared ? (
+                            <span className="inline-flex mt-2 text-[11px] px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
+                              Shared
+                            </span>
+                          ) : null}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        {nextAppointment ? (
+          <div className="max-w-5xl mx-auto">
+            <div className="bg-white/85 backdrop-blur-sm border border-gray-200 rounded-2xl p-4 shadow-sm flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-teal-600" />
+                  Next appointment
+                </p>
+                <p className="text-sm text-gray-700 mt-1">
+                  {formatDateTime(nextAppointment.scheduledAt)} • {nextAppointment.durationMins} min •{' '}
+                  <span className="font-semibold">{nextAppointment.status}</span>
+                </p>
+                {nextAppointment.meetingLink ? (
+                  <a
+                    href={nextAppointment.meetingLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm text-teal-700 hover:text-teal-800 underline mt-2 inline-block"
+                  >
+                    Open meeting link
+                  </a>
+                ) : null}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAppointmentModal(true)}
+                className="px-3 py-2 rounded-full bg-teal-50 border border-teal-200 text-teal-700 font-semibold text-sm hover:bg-teal-100 transition-all"
+              >
+                Request another
+              </button>
+            </div>
+          </div>
+        ) : null}
         <AnimatePresence>
           {messages.map((msg, idx) => (
             <motion.div

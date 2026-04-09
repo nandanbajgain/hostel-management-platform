@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
+import type { CounsellingAppointment, JournalEntry } from '@/types';
 
 export function useCounsellingSession(sessionId: string | null) {
   return useQuery({
@@ -142,6 +143,103 @@ export function useCounsellorStats() {
     queryFn: async () => {
       const response = await api.get('/counselling/stats');
       return response.data;
+    },
+  });
+}
+
+export function useSessionAppointments(sessionId: string | null) {
+  return useQuery<CounsellingAppointment[]>({
+    queryKey: ['counselling-appointments', sessionId],
+    queryFn: async () => {
+      const response = await api.get(`/counselling/sessions/${sessionId}/appointments`);
+      return response.data;
+    },
+    enabled: !!sessionId,
+  });
+}
+
+export function useCreateAppointment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ sessionId, data }: { sessionId: string; data: any }) => {
+      const response = await api.post(`/counselling/sessions/${sessionId}/appointments`, data);
+      return response.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['counselling-appointments', variables.sessionId] });
+    },
+  });
+}
+
+export function useCounsellorAppointments() {
+  return useQuery<CounsellingAppointment[]>({
+    queryKey: ['counsellor-appointments'],
+    queryFn: async () => {
+      const response = await api.get('/counselling/appointments');
+      return response.data;
+    },
+  });
+}
+
+export function useUpdateAppointment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ appointmentId, data }: { appointmentId: string; data: any }) => {
+      const response = await api.patch(`/counselling/appointments/${appointmentId}`, data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['counsellor-appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['counselling-appointments'] });
+    },
+  });
+}
+
+export function useMyJournalEntries() {
+  return useQuery<JournalEntry[]>({
+    queryKey: ['journal-entries'],
+    queryFn: async () => {
+      const response = await api.get('/counselling/journal');
+      return response.data;
+    },
+  });
+}
+
+export function useCreateJournalEntry() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: any) => {
+      const response = await api.post('/counselling/journal', data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['journal-entries'] });
+    },
+  });
+}
+
+export function useUpdateJournalEntry() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const response = await api.patch(`/counselling/journal/${id}`, data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['journal-entries'] });
+    },
+  });
+}
+
+export function useDeleteJournalEntry() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await api.delete(`/counselling/journal/${id}`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['journal-entries'] });
     },
   });
 }

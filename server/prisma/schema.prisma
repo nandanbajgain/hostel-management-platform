@@ -89,6 +89,13 @@ enum MessageType {
   NOTE
 }
 
+enum AppointmentStatus {
+  REQUESTED
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
 enum LeaveType {
   HOME
   MEDICAL
@@ -140,6 +147,8 @@ model User {
   counsellorProfile CounsellorProfile?
   studentSessions CounsellingSession[] @relation("StudentSessions")
   sentMessages CounsellingMessage[] @relation("SentMessages")
+  journalEntries JournalEntry[]
+  createdAppointments CounsellingAppointment[] @relation("AppointmentCreatedBy")
   leaves Leave[]
   @@map("users")
 }
@@ -331,6 +340,8 @@ model CounsellingSession {
   startedAt      DateTime  @default(now())
   closedAt       DateTime?
   messages       CounsellingMessage[]
+  appointments   CounsellingAppointment[]
+  journalEntries JournalEntry[]
   sessionNotes   String?
   followUpDate   DateTime?
   rating         Int?
@@ -342,6 +353,26 @@ model CounsellingSession {
   @@index([counsellorId])
   @@index([status])
   @@map("counselling_sessions")
+}
+
+model CounsellingAppointment {
+  id           String            @id @default(cuid())
+  sessionId    String
+  session      CounsellingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  scheduledAt  DateTime
+  durationMins Int               @default(30)
+  status       AppointmentStatus @default(REQUESTED)
+  note         String?
+  meetingLink  String?
+  createdById  String
+  createdBy    User              @relation("AppointmentCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([sessionId])
+  @@index([scheduledAt])
+  @@index([status])
+  @@map("counselling_appointments")
 }
 
 model CounsellingMessage {
@@ -361,6 +392,24 @@ model CounsellingMessage {
   @@index([senderId])
   @@index([isRead])
   @@map("counselling_messages")
+}
+
+model JournalEntry {
+  id        String   @id @default(cuid())
+  studentId String
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  sessionId String?
+  session   CounsellingSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  mood      Mood?
+  title     String?
+  content   String
+  isShared  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId, createdAt])
+  @@index([isShared])
+  @@map("journal_entries")
 }
 
 model Leave {

@@ -1,8 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
+  ParseBoolPipe,
   Post,
   Patch,
   Query,
@@ -21,6 +23,10 @@ import {
   SendMessageDto,
   CloseSessionDto,
   RateSessionDto,
+  CreateAppointmentDto,
+  UpdateAppointmentDto,
+  CreateJournalEntryDto,
+  UpdateJournalEntryDto,
 } from './dto';
 
 type AuthenticatedRequest = Request & {
@@ -160,6 +166,90 @@ export class CounsellingController {
     });
 
     return message;
+  }
+
+  @Post('sessions/:id/appointments')
+  @Roles('STUDENT', 'COUNSELLOR')
+  @UseGuards(RolesGuard)
+  async createAppointment(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') sessionId: string,
+    @Body() dto: CreateAppointmentDto,
+  ) {
+    return this.counsellingService.createAppointment(sessionId, req.user.id, dto);
+  }
+
+  @Get('sessions/:id/appointments')
+  @Roles('STUDENT', 'COUNSELLOR')
+  @UseGuards(RolesGuard)
+  async listSessionAppointments(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') sessionId: string,
+  ) {
+    return this.counsellingService.getAppointmentsForSession(sessionId, req.user.id);
+  }
+
+  @Get('appointments')
+  @Roles('COUNSELLOR')
+  @UseGuards(RolesGuard)
+  async listCounsellorAppointments(@Req() req: AuthenticatedRequest) {
+    return this.counsellingService.getAppointmentsForCounsellor(req.user.id);
+  }
+
+  @Patch('appointments/:id')
+  @Roles('COUNSELLOR')
+  @UseGuards(RolesGuard)
+  async updateAppointment(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') appointmentId: string,
+    @Body() dto: UpdateAppointmentDto,
+  ) {
+    return this.counsellingService.updateAppointment(appointmentId, req.user.id, dto);
+  }
+
+  @Get('journal')
+  @Roles('STUDENT')
+  @UseGuards(RolesGuard)
+  async listJournal(@Req() req: AuthenticatedRequest) {
+    return this.counsellingService.listJournalEntries(req.user.id);
+  }
+
+  @Post('journal')
+  @Roles('STUDENT')
+  @UseGuards(RolesGuard)
+  async createJournal(@Req() req: AuthenticatedRequest, @Body() dto: CreateJournalEntryDto) {
+    return this.counsellingService.createJournalEntry(req.user.id, dto);
+  }
+
+  @Patch('journal/:id')
+  @Roles('STUDENT')
+  @UseGuards(RolesGuard)
+  async updateJournal(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') entryId: string,
+    @Body() dto: UpdateJournalEntryDto,
+  ) {
+    return this.counsellingService.updateJournalEntry(entryId, req.user.id, dto);
+  }
+
+  @Delete('journal/:id')
+  @Roles('STUDENT')
+  @UseGuards(RolesGuard)
+  async deleteJournal(@Req() req: AuthenticatedRequest, @Param('id') entryId: string) {
+    return this.counsellingService.deleteJournalEntry(entryId, req.user.id);
+  }
+
+  @Get('student/:id/journal')
+  @Roles('COUNSELLOR')
+  @UseGuards(RolesGuard)
+  async listStudentSharedJournal(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') studentId: string,
+    @Query('sharedOnly', ParseBoolPipe) sharedOnly = true,
+  ) {
+    return this.counsellingService.getStudentJournalForCounsellor(studentId, req.user.id, {
+      sharedOnly,
+    });
   }
 
   @Get('search')

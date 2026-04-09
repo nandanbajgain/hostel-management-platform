@@ -10,8 +10,12 @@ import {
   SendMessageDto,
   CloseSessionDto,
   RateSessionDto,
+  CreateAppointmentDto,
+  UpdateAppointmentDto,
+  CreateJournalEntryDto,
+  UpdateJournalEntryDto,
 } from './dto';
-import { SessionStatus, MessageType } from '@prisma/client';
+import { AppointmentStatus, SessionStatus, MessageType } from '@prisma/client';
 
 @Injectable()
 export class CounsellingService {
@@ -351,5 +355,179 @@ export class CounsellingService {
       unreadCount: session.messages.length,
       lastMessage: session.messages[0] || null,
     }));
+  }
+
+  async createAppointment(sessionId: string, userId: string, dto: CreateAppointmentDto) {
+    const session = await this.getSessionById(sessionId);
+    const isParticipant =
+      session.studentId === userId || session.counsellor.userId === userId;
+    if (!isParticipant) {
+      throw new ForbiddenException('Not allowed to create appointments for this session');
+    }
+
+    const scheduledAt = new Date(dto.scheduledAt);
+    if (Number.isNaN(scheduledAt.getTime())) {
+      throw new BadRequestException('Invalid scheduledAt');
+    }
+
+    return this.prisma.counsellingAppointment.create({
+      data: {
+        sessionId,
+        scheduledAt,
+        durationMins: dto.durationMins ?? 30,
+        note: dto.note,
+        meetingLink: dto.meetingLink,
+        createdById: userId,
+        status: AppointmentStatus.REQUESTED,
+      },
+      include: {
+        createdBy: true,
+        session: { include: { student: true, counsellor: { include: { user: true } } } },
+      },
+    });
+  }
+
+  async getAppointmentsForSession(sessionId: string, userId: string) {
+    const session = await this.getSessionById(sessionId);
+    const isParticipant =
+      session.studentId === userId || session.counsellor.userId === userId;
+    if (!isParticipant) {
+      throw new ForbiddenException('Not allowed to view appointments for this session');
+    }
+
+    return this.prisma.counsellingAppointment.findMany({
+      where: { sessionId },
+      orderBy: { scheduledAt: 'asc' },
+      include: { createdBy: true },
+    });
+  }
+
+  async getAppointmentsForCounsellor(counsellorUserId: string) {
+    const counsellorProfile = await this.getCounsellorProfile(counsellorUserId);
+    return this.prisma.counsellingAppointment.findMany({
+      where: { session: { counsellorId: counsellorProfile.id } },
+      orderBy: { scheduledAt: 'asc' },
+      include: {
+        createdBy: true,
+        session: { include: { student: true } },
+      },
+    });
+  }
+
+  async updateAppointment(
+    appointmentId: string,
+    counsellorUserId: string,
+    dto: UpdateAppointmentDto,
+  ) {
+    const appointment = await this.prisma.counsellingAppointment.findUnique({
+      where: { id: appointmentId },
+      include: { session: { include: { counsellor: { include: { user: true } } } } },
+    });
+
+    if (!appointment) {
+      throw new NotFoundException('Appointment not found');
+    }
+
+    if (appointment.session.counsellor.userId !== counsellorUserId) {
+      throw new ForbiddenException('Only the assigned counsellor can update appointments');
+    }
+
+    return this.prisma.counsellingAppointment.update({
+      where: { id: appointmentId },
+      data: {
+        status: dto.status,
+        scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
+        durationMins: dto.durationMins,
+        note: dto.note,
+        meetingLink: dto.meetingLink,
+      },
+      include: {
+        createdBy: true,
+        session: { include: { student: true } },
+      },
+    });
+  }
+
+  async listJournalEntries(studentId: string) {
+    return this.prisma.journalEntry.findMany({
+      where: { studentId },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+  }
+
+  async createJournalEntry(studentId: string, dto: CreateJournalEntryDto) {
+    if (dto.sessionId) {
+      const session = await this.getSessionById(dto.sessionId);
+      if (session.studentId !== studentId) {
+        throw new ForbiddenException('Cannot attach journal to another student session');
+      }
+    }
+
+    return this.prisma.journalEntry.create({
+      data: {
+        studentId,
+        sessionId: dto.sessionId,
+        mood: dto.mood,
+        title: dto.title,
+        content: dto.content,
+        isShared: dto.isShared ?? false,
+      },
+    });
+  }
+
+  async updateJournalEntry(entryId: string, studentId: string, dto: UpdateJournalEntryDto) {
+    const entry = await this.prisma.journalEntry.findUnique({ where: { id: entryId } });
+    if (!entry) throw new NotFoundException('Journal entry not found');
+    if (entry.studentId !== studentId) {
+      throw new ForbiddenException('Not allowed to update this journal entry');
+    }
+
+    return this.prisma.journalEntry.update({
+      where: { id: entryId },
+      data: {
+        title: dto.title,
+        content: dto.content,
+        mood: dto.mood,
+        isShared: dto.isShared,
+      },
+    });
+  }
+
+  async deleteJournalEntry(entryId: string, studentId: string) {
+    const entry = await this.prisma.journalEntry.findUnique({ where: { id: entryId } });
+    if (!entry) throw new NotFoundException('Journal entry not found');
+    if (entry.studentId !== studentId) {
+      throw new ForbiddenException('Not allowed to delete this journal entry');
+    }
+
+    await this.prisma.journalEntry.delete({ where: { id: entryId } });
+    return { ok: true };
+  }
+
+  async getStudentJournalForCounsellor(
+    studentId: string,
+    counsellorUserId: string,
+    opts?: { sharedOnly?: boolean },
+  ) {
+    const counsellorProfile = await this.getCounsellorProfile(counsellorUserId);
+
+    const hasSession = await this.prisma.counsellingSession.findFirst({
+      where: { studentId, counsellorId: counsellorProfile.id },
+      select: { id: true },
+    });
+
+    if (!hasSession) {
+      throw new ForbiddenException('Not allowed to view this student journal');
+    }
+
+    return this.prisma.journalEntry.findMany({
+      where: {
+        studentId,
+        ...(opts?.sharedOnly ? { isShared: true } : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
   }
 }

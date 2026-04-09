@@ -7,11 +7,16 @@ import {
   Phone,
   MoreVertical,
   CheckCheck,
+  Calendar,
+  Check,
+  XCircle,
 } from 'lucide-react';
 import {
   useCounsellorDashboard,
   useCounsellorStats,
   useSendMessage,
+  useCounsellorAppointments,
+  useUpdateAppointment,
 } from '../../hooks/useCounsellingSession';
 import { useAuth } from '../../hooks/useAuth';
 import { useSessionSocket } from '../../hooks/useSessionSocket';
@@ -19,6 +24,7 @@ import type { CounsellingSession } from '../../types';
 
 export function CounsellorDashboardV2() {
   const { user } = useAuth();
+  const [view, setView] = useState<'messages' | 'appointments'>('messages');
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [messages, setMessages] = useState<any[]>([]);
@@ -30,6 +36,8 @@ export function CounsellorDashboardV2() {
   const { data: sessions = [] } = useCounsellorDashboard({ limit: 50 });
   const { data: stats } = useCounsellorStats();
   const sendMessageMutation = useSendMessage();
+  const { data: appointments = [] } = useCounsellorAppointments();
+  const updateAppointmentMutation = useUpdateAppointment();
 
   const selectedSession = sessions.find((s: CounsellingSession) => s.id === selectedSessionId);
 
@@ -89,6 +97,17 @@ export function CounsellorDashboardV2() {
     return lastMessage?.content || session.topic || 'General session';
   };
 
+  const filteredAppointments = appointments
+    .filter((a: any) => {
+      const matches = (a.session?.student?.name || '')
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+      return matches;
+    })
+    .sort((a: any, b: any) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
+
+  const requestedCount = appointments.filter((a: any) => a.status === 'REQUESTED').length;
+
   const formatTime = (date: string | Date) => {
     return new Date(date).toLocaleTimeString([], {
       hour: '2-digit',
@@ -96,13 +115,52 @@ export function CounsellorDashboardV2() {
     });
   };
 
+  const formatDateTime = (date: string | Date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(date));
+  };
+
   return (
-    <div className="w-full h-[calc(100vh-6rem)] lg:h-[calc(100vh-8rem)] overflow-hidden rounded-2xl border border-white/10 shadow-xl bg-white/80 backdrop-blur-md">
+    <div className="w-full h-[calc(100vh-6rem)] lg:h-[calc(100vh-8rem)] flex overflow-hidden rounded-2xl border border-white/10 shadow-xl bg-white/80 backdrop-blur-md">
       {/* Left Sidebar - Sessions List */}
       <div className="w-80 bg-white/70 border-r border-gray-200/70 flex flex-col">
         {/* Header */}
         <div className="p-4 border-b border-gray-200/70 bg-gradient-to-b from-white/90 to-white/60">
           <h1 className="text-2xl font-bold text-gray-900 mb-4 tracking-tight">Counselling</h1>
+          <div className="flex items-center gap-2 mb-3">
+            <button
+              type="button"
+              onClick={() => setView('messages')}
+              className={`flex-1 px-3 py-2 rounded-full text-sm font-semibold border transition-all ${
+                view === 'messages'
+                  ? 'bg-gray-900 text-white border-gray-900'
+                  : 'bg-white/80 text-gray-800 border-gray-200 hover:bg-white'
+              }`}
+            >
+              Messages
+            </button>
+            <button
+              type="button"
+              onClick={() => setView('appointments')}
+              className={`flex-1 px-3 py-2 rounded-full text-sm font-semibold border transition-all flex items-center justify-center gap-2 ${
+                view === 'appointments'
+                  ? 'bg-gray-900 text-white border-gray-900'
+                  : 'bg-white/80 text-gray-800 border-gray-200 hover:bg-white'
+              }`}
+            >
+              <Calendar className="w-4 h-4" />
+              Appointments
+              {requestedCount > 0 ? (
+                <span className={`ml-1 text-[11px] px-2 py-0.5 rounded-full ${view === 'appointments' ? 'bg-white/15' : 'bg-teal-50 text-teal-700 border border-teal-200'}`}>
+                  {requestedCount}
+                </span>
+              ) : null}
+            </button>
+          </div>
           <div className="relative">
             <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
             <input
@@ -130,54 +188,135 @@ export function CounsellorDashboardV2() {
         {/* Sessions List */}
         <div className="flex-1 overflow-y-auto space-y-2 p-3">
           <AnimatePresence>
-            {filteredSessions.length > 0 ? (
-              filteredSessions.map((session: CounsellingSession) => (
-                <motion.button
-                  key={session.id}
+            {view === 'messages' ? (
+              filteredSessions.length > 0 ? (
+                filteredSessions.map((session: CounsellingSession) => (
+                  <motion.button
+                    key={session.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    onClick={() => setSelectedSessionId(session.id)}
+                    className={`w-full p-3 rounded-2xl text-left transition-all border shadow-sm ${
+                      selectedSessionId === session.id
+                        ? 'bg-gradient-to-r from-teal-50 to-blue-50 border-teal-200/80 ring-1 ring-teal-400/20'
+                        : 'bg-white/80 border-gray-200/70 hover:bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center text-white font-bold flex-shrink-0">
+                        {session.student?.name?.charAt(0) || 'S'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 text-sm truncate">{session.student?.name}</p>
+                        <p className="text-xs text-gray-500 truncate">{getSessionPreview(session)}</p>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center text-xs">
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-white font-medium ${
+                          session.status === 'OPEN'
+                            ? 'bg-emerald-500'
+                            : session.status === 'ACTIVE'
+                              ? 'bg-blue-500'
+                              : 'bg-gray-500'
+                        }`}
+                      >
+                        {session.status}
+                      </span>
+                      <span className="text-gray-400">
+                        {new Date(session.startedAt).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </span>
+                    </div>
+                  </motion.button>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No conversations found</p>
+                </div>
+              )
+            ) : filteredAppointments.length > 0 ? (
+              filteredAppointments.map((appt: any) => (
+                <motion.div
+                  key={appt.id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  onClick={() => setSelectedSessionId(session.id)}
-                  className={`w-full p-3 rounded-2xl text-left transition-all border shadow-sm ${
-                    selectedSessionId === session.id
-                      ? 'bg-gradient-to-r from-teal-50 to-blue-50 border-teal-200/80 ring-1 ring-teal-400/20'
-                      : 'bg-white/80 border-gray-200/70 hover:bg-white'
-                  }`}
+                  className="bg-white/85 border border-gray-200/70 rounded-2xl p-3 shadow-sm"
                 >
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center text-white font-bold flex-shrink-0">
-                      {session.student?.name?.charAt(0) || 'S'}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSessionId(appt.sessionId)}
+                    className="w-full text-left"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-gray-900 truncate">
+                          {appt.session?.student?.name || 'Student'}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-1">
+                          {formatDateTime(appt.scheduledAt)} • {appt.durationMins} min
+                        </p>
+                        {appt.note ? (
+                          <p className="text-xs text-gray-500 mt-1 line-clamp-2">{appt.note}</p>
+                        ) : null}
+                      </div>
+                      <span
+                        className={`text-[11px] px-2 py-0.5 rounded-full border flex-shrink-0 ${
+                          appt.status === 'REQUESTED'
+                            ? 'bg-amber-50 text-amber-800 border-amber-200'
+                            : appt.status === 'CONFIRMED'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : appt.status === 'CANCELLED'
+                                ? 'bg-gray-50 text-gray-700 border-gray-200'
+                                : 'bg-blue-50 text-blue-700 border-blue-200'
+                        }`}
+                      >
+                        {appt.status}
+                      </span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm truncate">{session.student?.name}</p>
-                      <p className="text-xs text-gray-500 truncate">{getSessionPreview(session)}</p>
+                  </button>
+
+                  {appt.status === 'REQUESTED' ? (
+                    <div className="flex items-center gap-2 mt-3">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateAppointmentMutation.mutate({
+                            appointmentId: appt.id,
+                            data: { status: 'CONFIRMED' },
+                          })
+                        }
+                        className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-all"
+                      >
+                        <Check className="w-4 h-4" />
+                        Confirm
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateAppointmentMutation.mutate({
+                            appointmentId: appt.id,
+                            data: { status: 'CANCELLED' },
+                          })
+                        }
+                        className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-gray-800 text-sm font-semibold transition-all"
+                      >
+                        <XCircle className="w-4 h-4 text-gray-500" />
+                        Decline
+                      </button>
                     </div>
-                  </div>
-                  <div className="flex justify-between items-center text-xs">
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-white font-medium ${
-                        session.status === 'OPEN'
-                          ? 'bg-emerald-500'
-                          : session.status === 'ACTIVE'
-                            ? 'bg-blue-500'
-                            : 'bg-gray-500'
-                      }`}
-                    >
-                      {session.status}
-                    </span>
-                    <span className="text-gray-400">
-                      {new Date(session.startedAt).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </span>
-                  </div>
-                </motion.button>
+                  ) : null}
+                </motion.div>
               ))
             ) : (
               <div className="text-center py-8 text-gray-500">
-                <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No conversations found</p>
+                <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No appointments found</p>
               </div>
             )}
           </AnimatePresence>

@@ -131,6 +131,7 @@ export interface ChatMessage {
 export type SessionStatus = 'OPEN' | 'ACTIVE' | 'CLOSED' | 'ARCHIVED'
 export type Mood = 'ANXIOUS' | 'SAD' | 'STRESSED' | 'OKAY' | 'GOOD'
 export type MessageType = 'TEXT' | 'RESOURCE' | 'NOTE'
+export type AppointmentStatus = 'REQUESTED' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
 
 export interface CounsellorProfile {
   id: string
@@ -155,6 +156,33 @@ export interface CounsellingMessage {
   sentAt: string
 }
 
+export interface CounsellingAppointment {
+  id: string
+  sessionId: string
+  scheduledAt: string
+  durationMins: number
+  status: AppointmentStatus
+  note?: string | null
+  meetingLink?: string | null
+  createdById?: string
+  createdBy?: User
+  createdAt: string
+  updatedAt: string
+  session?: CounsellingSession
+}
+
+export interface JournalEntry {
+  id: string
+  studentId: string
+  sessionId?: string | null
+  mood?: Mood | null
+  title?: string | null
+  content: string
+  isShared: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 export interface CounsellingSession {
   id: string
   studentId: string
@@ -167,6 +195,7 @@ export interface CounsellingSession {
   startedAt: string
   closedAt?: string | null
   messages?: CounsellingMessage[]
+  appointments?: CounsellingAppointment[]
   sessionNotes?: string
   followUpDate?: string | null
   rating?: number | null
