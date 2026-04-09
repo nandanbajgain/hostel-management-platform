@@ -35,6 +35,18 @@ export class CounsellingGateway implements OnGatewayConnection, OnGatewayDisconn
     private readonly counsellingService: CounsellingService,
   ) {}
 
+  emitSessionMessage(sessionId: string, message: {
+    id: string;
+    sessionId: string;
+    senderId: string;
+    senderName?: string;
+    content: string;
+    type: string;
+    sentAt: Date;
+  }) {
+    this.server.to(`session:${sessionId}`).emit('counselling:message', message);
+  }
+
   handleConnection(client: Socket) {
     try {
       const auth = (client.handshake.auth || {}) as { token?: unknown };

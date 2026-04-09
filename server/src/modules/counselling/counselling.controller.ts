@@ -15,6 +15,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { CounsellingService } from './counselling.service';
+import { CounsellingGateway } from './counselling.gateway';
 import {
   CreateSessionDto,
   SendMessageDto,
@@ -31,7 +32,10 @@ type AuthenticatedRequest = Request & {
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 export class CounsellingController {
-  constructor(private readonly counsellingService: CounsellingService) {}
+  constructor(
+    private readonly counsellingService: CounsellingService,
+    private readonly counsellingGateway: CounsellingGateway,
+  ) {}
 
   @Post('sessions')
   @Roles('STUDENT')
@@ -138,7 +142,24 @@ export class CounsellingController {
     @Param('id') sessionId: string,
     @Body() dto: SendMessageDto,
   ) {
-    return this.counsellingService.sendMessage(sessionId, req.user.id, dto);
+    const message = await this.counsellingService.sendMessage(
+      sessionId,
+      req.user.id,
+      dto,
+    );
+
+    // Keep REST and WebSocket clients in sync.
+    this.counsellingGateway.emitSessionMessage(sessionId, {
+      id: message.id,
+      sessionId,
+      senderId: message.senderId,
+      senderName: message.sender?.name,
+      content: message.content,
+      type: message.type,
+      sentAt: message.sentAt,
+    });
+
+    return message;
   }
 
   @Get('search')

@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   CreateSessionDto,
@@ -126,6 +131,12 @@ export class CounsellingService {
 
   async sendMessage(sessionId: string, senderId: string, dto: SendMessageDto) {
     const session = await this.getSessionById(sessionId);
+
+    const isParticipant =
+      session.studentId === senderId || session.counsellor.userId === senderId;
+    if (!isParticipant) {
+      throw new ForbiddenException('Not allowed to send messages in this session');
+    }
 
     if (session.status === SessionStatus.CLOSED) {
       throw new BadRequestException('Cannot send message to closed session');
@@ -314,12 +325,21 @@ export class CounsellingService {
   }
 
   async getSessionsWithUnreadMessages(counsellorId: string) {
+    const counsellorProfile = await this.prisma.counsellorProfile.findUnique({
+      where: { id: counsellorId },
+      select: { userId: true },
+    });
+
+    if (!counsellorProfile) {
+      throw new NotFoundException('Counsellor profile not found');
+    }
+
     const sessions = await this.prisma.counsellingSession.findMany({
       where: { counsellorId },
       include: {
         student: true,
         messages: {
-          where: { isRead: false, senderId: { not: counsellorId } },
+          where: { isRead: false, senderId: { not: counsellorProfile.userId } },
           orderBy: { sentAt: 'desc' },
         },
       },
