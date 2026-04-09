@@ -105,7 +105,7 @@ export function CounsellorDashboardV2() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search students..."
-              className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-full text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-full text-gray-900 placeholder-gray-500 caret-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm transition-all"
             />
           </div>
         </div>
@@ -282,22 +282,24 @@ export function CounsellorDashboardV2() {
             </div>
 
             {/* Input Area */}
-            <div className="bg-white border-t border-gray-200 px-6 py-4 shadow-lg">
-              <form onSubmit={handleSendMessage} className="flex gap-3">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  placeholder="Type your message..."
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-full text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
-                />
+            <div className="bg-gradient-to-r from-white via-teal-50 to-white border-t border-gray-200 px-4 sm:px-6 py-4 shadow-lg">
+              <form onSubmit={handleSendMessage} className="max-w-5xl mx-auto flex items-center gap-3">
+                <div className="flex-1 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full shadow-sm focus-within:ring-2 focus-within:ring-teal-500/40 focus-within:border-teal-300 transition-all">
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    placeholder="Type your message..."
+                    className="w-full bg-transparent px-5 py-3 text-gray-900 placeholder-gray-500 caret-teal-600 focus:outline-none"
+                  />
+                </div>
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                   type="submit"
                   disabled={!inputText.trim()}
-                  className="bg-teal-500 hover:bg-teal-600 disabled:opacity-50 text-white p-3 rounded-full transition-all shadow-md flex items-center justify-center"
+                  className="bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 disabled:opacity-50 text-white h-12 w-12 rounded-full transition-all shadow-md flex items-center justify-center"
                 >
                   <Send className="w-5 h-5" />
                 </motion.button>

@@ -65,7 +65,7 @@ export function MoodSelector({ onSelect, isLoading }: MoodSelectorProps) {
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             placeholder="e.g., Homesickness, Academic pressure, Family issues..."
-            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-200 transition-all text-gray-900 placeholder-gray-500"
+            className="w-full bg-white px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-200 transition-all text-gray-900 placeholder-gray-500 caret-teal-600"
             spellCheck="false"
           />
         </div>
