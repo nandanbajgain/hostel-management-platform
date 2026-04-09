@@ -17,8 +17,14 @@ async function main() {
       avatarUrl: 'https://placehold.co/200x200/png',
       enrollmentNo: 'ADMIN-001',
       course: 'Administration',
+      coursePreference: 'LAW',
       gender: 'OTHER',
       sportsInterests: ['Badminton'],
+      hobbies: ['Reading'],
+      sleepSchedule: 'BALANCED',
+      noiseTolerance: 'MEDIUM',
+      studyHours: 6,
+      sleepHours: 7,
       careerGoal: 'Run hostel operations efficiently',
       address: 'South Asian University Campus',
       parentContactNo: '+91-9999999991',
@@ -38,8 +44,14 @@ async function main() {
       avatarUrl: 'https://placehold.co/200x200/png',
       enrollmentNo: 'WARDEN-001',
       course: 'Administration',
+      coursePreference: 'SOCIOLOGY',
       gender: 'FEMALE',
       sportsInterests: ['Yoga'],
+      hobbies: ['Reading', 'Writing'],
+      sleepSchedule: 'EARLY_BIRD',
+      noiseTolerance: 'MEDIUM',
+      studyHours: 5,
+      sleepHours: 8,
       careerGoal: 'Support student wellbeing and discipline',
       address: 'Warden Residence, SAU',
       parentContactNo: '+91-9999999992',
@@ -94,8 +106,14 @@ async function main() {
       avatarUrl: 'https://placehold.co/200x200/png',
       enrollmentNo: 'SAU-2026-001',
       course: 'M.Tech Computer Science',
+      coursePreference: 'ENGINEERING',
       gender: 'MALE',
       sportsInterests: ['Football', 'Cricket'],
+      hobbies: ['Gym', 'Gaming'],
+      sleepSchedule: 'NIGHT_OWL',
+      noiseTolerance: 'MEDIUM',
+      studyHours: 7,
+      sleepHours: 6,
       careerGoal: 'Become an AI engineer',
       address: 'New Delhi, India',
       parentContactNo: '+91-9811111111',
@@ -212,6 +230,147 @@ main()
 
     await prisma.room.update({
       where: { id: demoRoom.id },
+      data: { status: 'OCCUPIED' },
+    });
+  }
+
+  const demoStudents = [
+    {
+      name: 'Riya Sen',
+      email: 'riya.sen@sau.ac.in',
+      phone: '+91-9876500001',
+      enrollmentNo: 'SAU-2026-002',
+      course: 'BA LLB',
+      coursePreference: 'LAW',
+      gender: 'FEMALE' as const,
+      sportsInterests: ['Chess', 'Cricket'],
+      hobbies: ['Singing', 'Writing'],
+      sleepSchedule: 'BALANCED',
+      noiseTolerance: 'MEDIUM',
+      studyHours: 6,
+      sleepHours: 7,
+      careerGoal: 'Become a constitutional lawyer',
+      address: 'Kolkata, India',
+      parentContactNo: '+91-9811111112',
+      approvalStatus: 'APPROVED' as const,
+    },
+    {
+      name: 'Kabir Nair',
+      email: 'kabir.nair@sau.ac.in',
+      phone: '+91-9876500002',
+      enrollmentNo: 'SAU-2026-003',
+      course: 'MA International Relations',
+      coursePreference: 'INTERNATIONAL_RELATIONS',
+      gender: 'MALE' as const,
+      sportsInterests: ['Football', 'Basketball'],
+      hobbies: ['Gaming', 'Dancing'],
+      sleepSchedule: 'NIGHT_OWL',
+      noiseTolerance: 'HIGH',
+      studyHours: 5,
+      sleepHours: 6,
+      careerGoal: 'Work in diplomacy and foreign policy',
+      address: 'Kochi, India',
+      parentContactNo: '+91-9811111113',
+      approvalStatus: 'APPROVED' as const,
+    },
+    {
+      name: 'Meera Iyer',
+      email: 'meera.iyer@sau.ac.in',
+      phone: '+91-9876500003',
+      enrollmentNo: 'SAU-2026-004',
+      course: 'MSc Mathematics',
+      coursePreference: 'MATHEMATICS',
+      gender: 'FEMALE' as const,
+      sportsInterests: ['Chess', 'Table Tennis'],
+      hobbies: ['Reading', 'Writing'],
+      sleepSchedule: 'EARLY_BIRD',
+      noiseTolerance: 'LOW',
+      studyHours: 8,
+      sleepHours: 7,
+      careerGoal: 'Pursue mathematical research',
+      address: 'Chennai, India',
+      parentContactNo: '+91-9811111114',
+      approvalStatus: 'APPROVED' as const,
+    },
+    {
+      name: 'Aman Verma',
+      email: 'aman.verma@sau.ac.in',
+      phone: '+91-9876500004',
+      enrollmentNo: 'SAU-2026-005',
+      course: 'BA Sociology',
+      coursePreference: 'SOCIOLOGY',
+      gender: 'MALE' as const,
+      sportsInterests: ['Athletics', 'Volleyball'],
+      hobbies: ['Painting', 'Reading'],
+      sleepSchedule: 'BALANCED',
+      noiseTolerance: 'LOW',
+      studyHours: 6,
+      sleepHours: 8,
+      careerGoal: 'Research urban communities and youth policy',
+      address: 'Lucknow, India',
+      parentContactNo: '+91-9811111115',
+      approvalStatus: 'APPROVED' as const,
+    },
+    {
+      name: 'Neha Joshi',
+      email: 'neha.joshi@sau.ac.in',
+      phone: '+91-9876500005',
+      enrollmentNo: 'SAU-2026-006',
+      course: 'B.Tech Mechanical Engineering',
+      coursePreference: 'ENGINEERING',
+      gender: 'FEMALE' as const,
+      sportsInterests: ['Badminton', 'Gym'],
+      hobbies: ['Gym', 'Reading'],
+      sleepSchedule: 'EARLY_BIRD',
+      noiseTolerance: 'LOW',
+      studyHours: 7,
+      sleepHours: 8,
+      careerGoal: 'Build sustainable manufacturing systems',
+      address: 'Pune, India',
+      parentContactNo: '+91-9811111116',
+      approvalStatus: 'PENDING' as const,
+    },
+  ];
+
+  for (const demoStudent of demoStudents) {
+    await prisma.user.upsert({
+      where: { email: demoStudent.email },
+      update: {},
+      create: {
+        ...demoStudent,
+        role: 'STUDENT',
+        password: await hash('student123'),
+        avatarUrl: 'https://placehold.co/200x200/png',
+        approvedAt:
+          demoStudent.approvalStatus === 'APPROVED' ? new Date() : null,
+      },
+    });
+  }
+
+  const roommatePairs = [
+    { email: 'riya.sen@sau.ac.in', roomNumber: 'A102' },
+    { email: 'kabir.nair@sau.ac.in', roomNumber: 'A103' },
+    { email: 'meera.iyer@sau.ac.in', roomNumber: 'A104' },
+    { email: 'aman.verma@sau.ac.in', roomNumber: 'A105' },
+  ];
+
+  for (const pair of roommatePairs) {
+    const occupant = await prisma.user.findUnique({
+      where: { email: pair.email },
+    });
+    const room = rooms.find((entry) => entry.number === pair.roomNumber);
+    if (!occupant || !room) {
+      continue;
+    }
+
+    await prisma.roomAllocation.upsert({
+      where: { userId: occupant.id },
+      update: {},
+      create: { userId: occupant.id, roomId: room.id, isActive: true },
+    });
+
+    await prisma.room.update({
+      where: { id: room.id },
       data: { status: 'OCCUPIED' },
     });
   }
@@ -409,8 +568,14 @@ main()
       avatarUrl: 'https://placehold.co/200x200/png',
       enrollmentNo: 'COUNSELLOR-001',
       course: 'Student Wellbeing & Counselling',
+      coursePreference: 'SOCIOLOGY',
       gender: 'FEMALE',
       sportsInterests: ['Yoga', 'Meditation'],
+      hobbies: ['Reading', 'Writing'],
+      sleepSchedule: 'BALANCED',
+      noiseTolerance: 'LOW',
+      studyHours: 5,
+      sleepHours: 8,
       careerGoal: 'Support student mental health and wellbeing',
       address: 'Counselling Center, SAU',
       parentContactNo: '+91-9999999990',

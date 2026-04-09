@@ -15,8 +15,14 @@ export interface User {
   avatarUrl?: string
   enrollmentNo?: string
   course?: string
+  coursePreference?: string
   gender?: Gender
   sportsInterests?: string[]
+  hobbies?: string[]
+  sleepSchedule?: string
+  noiseTolerance?: string
+  studyHours?: number
+  sleepHours?: number
   careerGoal?: string
   address?: string
   parentContactNo?: string

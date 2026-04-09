@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+﻿import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -17,6 +17,14 @@ import sauLogo from '@/assets/sau-logo.png'
 import { getErrorMessage } from '@/lib/errors'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 
+const coursePreferenceOptions = [
+  { value: 'ENGINEERING', label: 'Engineering' },
+  { value: 'LAW', label: 'Law' },
+  { value: 'INTERNATIONAL_RELATIONS', label: 'International Relations' },
+  { value: 'SOCIOLOGY', label: 'Sociology' },
+  { value: 'MATHEMATICS', label: 'Mathematics' },
+]
+
 const sportsOptions = [
   'Football',
   'Cricket',
@@ -26,6 +34,31 @@ const sportsOptions = [
   'Volleyball',
   'Athletics',
   'Chess',
+  'Tennis',
+  'Gym',
+]
+
+const hobbyOptions = [
+  'Painting',
+  'Singing',
+  'Gym',
+  'Reading',
+  'Gaming',
+  'Dancing',
+  'Cooking',
+  'Writing',
+]
+
+const sleepScheduleOptions = [
+  { value: 'EARLY_BIRD', label: 'Early bird' },
+  { value: 'BALANCED', label: 'Balanced' },
+  { value: 'NIGHT_OWL', label: 'Night owl' },
+]
+
+const noiseToleranceOptions = [
+  { value: 'LOW', label: 'Low' },
+  { value: 'MEDIUM', label: 'Medium' },
+  { value: 'HIGH', label: 'High' },
 ]
 
 const schema = z.object({
@@ -38,8 +71,14 @@ const schema = z.object({
     .regex(/^\+?[1-9]\d{9,14}$/, 'Enter a valid phone number (10-15 digits)'),
   enrollmentNo: z.string().min(4, 'Enrollment number is required'),
   course: z.string().min(2, 'Course is required'),
+  coursePreference: z.string().min(1, 'Select an academic stream'),
   gender: z.enum(['MALE', 'FEMALE', 'OTHER']),
   sportsInterests: z.array(z.string()).min(1, 'Select at least one sport'),
+  hobbies: z.array(z.string()).min(1, 'Select at least one hobby'),
+  sleepSchedule: z.string().min(1, 'Select a sleep schedule'),
+  noiseTolerance: z.string().min(1, 'Select a noise tolerance'),
+  studyHours: z.coerce.number().int().min(1, 'Select study hours').max(16),
+  sleepHours: z.coerce.number().int().min(3, 'Select sleep hours').max(12),
   careerGoal: z.string().min(10, 'Please add a career goal'),
   address: z.string().min(10, 'Address is required').max(250, 'Max 250 characters'),
   parentContactNo: z
@@ -50,7 +89,8 @@ const schema = z.object({
   role: z.literal('STUDENT'),
 })
 
-type FormData = z.infer<typeof schema>
+type FormValues = z.input<typeof schema>
+type FormData = z.output<typeof schema>
 
 const inputStyle = (hasError = false): React.CSSProperties => ({
   width: '100%',
@@ -72,6 +112,11 @@ const sectionTitleStyle: React.CSSProperties = {
   marginBottom: 14,
 }
 
+const multiSelectStyle = (hasError = false): React.CSSProperties => ({
+  ...inputStyle(hasError),
+  minHeight: 140,
+})
+
 export default function RegisterPage() {
   const isMobile = useMediaQuery('(max-width: 900px)')
   const navigate = useNavigate()
@@ -82,13 +127,20 @@ export default function RegisterPage() {
     formState: { errors, isSubmitting },
     setValue,
     watch,
-  } = useForm<FormData>({
+  } = useForm<FormValues, unknown, FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { sportsInterests: [], role: 'STUDENT' },
+    defaultValues: {
+      sportsInterests: [],
+      hobbies: [],
+      role: 'STUDENT',
+      studyHours: 6,
+      sleepHours: 7,
+    },
   })
 
-  const sports = watch('sportsInterests') || []
   const avatarUrl = watch('avatarUrl')
+  const sportsInterests = watch('sportsInterests') || []
+  const hobbies = watch('hobbies') || []
 
   const submit = async (values: FormData) => {
     try {
@@ -127,6 +179,14 @@ export default function RegisterPage() {
     } finally {
       setUploading(false)
     }
+  }
+
+  const updateMultiSelect = (
+    field: 'sportsInterests' | 'hobbies',
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    const values = Array.from(event.target.selectedOptions).map((option) => option.value)
+    setValue(field, values as FormValues[typeof field], { shouldValidate: true })
   }
 
   return (
@@ -212,8 +272,8 @@ export default function RegisterPage() {
               }}
             >
               Create your student hostel profile with academic, contact, and lifestyle
-              details so the warden can review eligibility and suggest compatible
-              roommates for two-student occupancy rooms.
+              data so the admin can review eligibility and approve roommate compatibility
+              recommendations.
             </p>
 
             <div style={{ display: 'grid', gap: 12, marginBottom: 22 }}>
@@ -225,8 +285,8 @@ export default function RegisterPage() {
                 },
                 {
                   icon: GraduationCap,
-                  title: 'Academic matching',
-                  text: 'Course, career goals, and sports interests help staff pair compatible roommates.',
+                  title: 'Cluster-ready data',
+                  text: 'Course stream, sports, hobbies, sleep pattern, and noise tolerance feed the compatibility model.',
                 },
                 {
                   icon: UserRound,
@@ -290,11 +350,11 @@ export default function RegisterPage() {
                 What happens next
               </div>
               <div style={{ color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.7 }}>
-                1. Submit your student profile.
+                1. Submit your registration profile.
                 <br />
-                2. The warden reviews and approves your account.
+                2. The admin reviews clustering-based compatibility suggestions.
                 <br />
-                3. Room allocation and dashboard access become available after approval.
+                3. The admin approves the profile and allots a room.
               </div>
             </div>
           </div>
@@ -325,18 +385,21 @@ export default function RegisterPage() {
               Complete your hostel profile
             </h2>
             <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-              Fill in all required details carefully. The information below is used for
-              approval, room allocation, and roommate compatibility suggestions.
+              Fill in all required details carefully. These details are used for approval,
+              roommate clustering, and room allocation suggestions.
             </p>
           </div>
 
           <form onSubmit={handleSubmit(submit)} style={{ display: 'grid', gap: 24 }}>
+            <input type="hidden" {...register('avatarUrl')} />
+            <input type="hidden" {...register('role')} />
+
             <div>
               <div style={sectionTitleStyle}>Basic Information</div>
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                  gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, minmax(0, 1fr))',
                   gap: 14,
                 }}
               >
@@ -381,7 +444,7 @@ export default function RegisterPage() {
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'minmax(0, 1fr) minmax(260px, 320px)',
+                  gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 1fr) minmax(260px, 320px)',
                   gap: 16,
                 }}
               >
@@ -404,12 +467,6 @@ export default function RegisterPage() {
                       <option value="FEMALE">Female</option>
                       <option value="OTHER">Other</option>
                     </select>
-                    <style>{`
-                      select option {
-                        color: #0f172a;
-                        background: #ffffff;
-                      }
-                    `}</style>
                     {errors.gender ? (
                       <p style={{ color: 'var(--accent-danger)', fontSize: 12, marginTop: 5 }}>
                         {errors.gender.message}
@@ -437,6 +494,31 @@ export default function RegisterPage() {
                     {errors.parentContactNo ? (
                       <p style={{ color: 'var(--accent-danger)', fontSize: 12, marginTop: 5 }}>
                         {errors.parentContactNo.message}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: 13,
+                        marginBottom: 6,
+                        color: 'var(--text-secondary)',
+                        fontWeight: 500,
+                      }}
+                    >
+                      Home address
+                    </label>
+                    <textarea
+                      {...register('address')}
+                      placeholder="New Delhi, India"
+                      rows={4}
+                      style={inputStyle(Boolean(errors.address))}
+                    />
+                    {errors.address ? (
+                      <p style={{ color: 'var(--accent-danger)', fontSize: 12, marginTop: 5 }}>
+                        {errors.address.message}
                       </p>
                     ) : null}
                   </div>
@@ -484,15 +566,13 @@ export default function RegisterPage() {
                       fontSize: 12,
                     }}
                   >
-                    {uploading
-                      ? 'Uploading image...'
-                      : 'Upload a clear front-facing student photo'}
+                    {uploading ? 'Uploading image...' : 'Upload a clear front-facing student photo'}
                   </div>
 
                   <div
                     style={{
                       marginTop: 14,
-                      minHeight: 160,
+                      minHeight: 180,
                       borderRadius: 14,
                       border: '1px dashed var(--border-default)',
                       background: 'rgba(255,255,255,0.02)',
@@ -526,60 +606,192 @@ export default function RegisterPage() {
 
             <div>
               <div style={sectionTitleStyle}>Compatibility Profile</div>
-              <div style={{ display: 'grid', gap: 14 }}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, minmax(0, 1fr))',
+                  gap: 14,
+                }}
+              >
                 <div>
                   <label
                     style={{
                       display: 'block',
                       fontSize: 13,
-                      marginBottom: 8,
+                      marginBottom: 6,
+                      color: 'var(--text-secondary)',
+                      fontWeight: 500,
+                    }}
+                  >
+                    Academic stream preference
+                  </label>
+                  <select
+                    {...register('coursePreference')}
+                    style={inputStyle(Boolean(errors.coursePreference))}
+                  >
+                    <option value="">Select stream</option>
+                    {coursePreferenceOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.coursePreference ? (
+                    <p style={{ color: 'var(--accent-danger)', fontSize: 12, marginTop: 5 }}>
+                      {errors.coursePreference.message}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: 13,
+                      marginBottom: 6,
+                      color: 'var(--text-secondary)',
+                      fontWeight: 500,
+                    }}
+                  >
+                    Sleep schedule
+                  </label>
+                  <select
+                    {...register('sleepSchedule')}
+                    style={inputStyle(Boolean(errors.sleepSchedule))}
+                  >
+                    <option value="">Select sleep schedule</option>
+                    {sleepScheduleOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.sleepSchedule ? (
+                    <p style={{ color: 'var(--accent-danger)', fontSize: 12, marginTop: 5 }}>
+                      {errors.sleepSchedule.message}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: 13,
+                      marginBottom: 6,
+                      color: 'var(--text-secondary)',
+                      fontWeight: 500,
+                    }}
+                  >
+                    Noise tolerance
+                  </label>
+                  <select
+                    {...register('noiseTolerance')}
+                    style={inputStyle(Boolean(errors.noiseTolerance))}
+                  >
+                    <option value="">Select noise tolerance</option>
+                    {noiseToleranceOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.noiseTolerance ? (
+                    <p style={{ color: 'var(--accent-danger)', fontSize: 12, marginTop: 5 }}>
+                      {errors.noiseTolerance.message}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 14 }}>
+                  <div>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: 13,
+                        marginBottom: 6,
+                        color: 'var(--text-secondary)',
+                        fontWeight: 500,
+                      }}
+                    >
+                      Study hours/day
+                    </label>
+                    <select {...register('studyHours')} style={inputStyle(Boolean(errors.studyHours))}>
+                      {Array.from({ length: 12 }, (_, index) => index + 1).map((value) => (
+                        <option key={value} value={value}>
+                          {value} hour{value > 1 ? 's' : ''}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.studyHours ? (
+                      <p style={{ color: 'var(--accent-danger)', fontSize: 12, marginTop: 5 }}>
+                        {errors.studyHours.message}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: 13,
+                        marginBottom: 6,
+                        color: 'var(--text-secondary)',
+                        fontWeight: 500,
+                      }}
+                    >
+                      Sleep hours/day
+                    </label>
+                    <select {...register('sleepHours')} style={inputStyle(Boolean(errors.sleepHours))}>
+                      {Array.from({ length: 8 }, (_, index) => index + 5).map((value) => (
+                        <option key={value} value={value}>
+                          {value} hours
+                        </option>
+                      ))}
+                    </select>
+                    {errors.sleepHours ? (
+                      <p style={{ color: 'var(--accent-danger)', fontSize: 12, marginTop: 5 }}>
+                        {errors.sleepHours.message}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, minmax(0, 1fr))',
+                  gap: 14,
+                  marginTop: 14,
+                }}
+              >
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: 13,
+                      marginBottom: 6,
                       color: 'var(--text-secondary)',
                       fontWeight: 500,
                     }}
                   >
                     Sports interests
                   </label>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {sportsOptions.map((sport) => {
-                      const checked = sports.includes(sport)
-                      return (
-                        <label
-                          key={sport}
-                          style={{
-                            padding: '9px 13px',
-                            borderRadius: 999,
-                            cursor: 'pointer',
-                            background: checked
-                              ? 'rgba(108,99,255,0.18)'
-                              : 'rgba(255,255,255,0.03)',
-                            border: `1px solid ${
-                              checked ? 'var(--accent-primary)' : 'var(--border-default)'
-                            }`,
-                            color: checked
-                              ? 'var(--text-primary)'
-                              : 'var(--text-secondary)',
-                            fontSize: 13,
-                            fontWeight: 500,
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() =>
-                              setValue(
-                                'sportsInterests',
-                                checked
-                                  ? sports.filter((item) => item !== sport)
-                                  : [...sports, sport],
-                                { shouldValidate: true }
-                              )
-                            }
-                            style={{ display: 'none' }}
-                          />
-                          {sport}
-                        </label>
-                      )
-                    })}
+                  <select
+                    multiple
+                    value={sportsInterests}
+                    onChange={(event) => updateMultiSelect('sportsInterests', event)}
+                    style={multiSelectStyle(Boolean(errors.sportsInterests))}
+                  >
+                    {sportsOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                  <div style={{ color: 'var(--text-tertiary)', fontSize: 12, marginTop: 6 }}>
+                    Hold Ctrl/Cmd to select multiple sports.
                   </div>
                   {errors.sportsInterests ? (
                     <p style={{ color: 'var(--accent-danger)', fontSize: 12, marginTop: 5 }}>
@@ -598,25 +810,32 @@ export default function RegisterPage() {
                       fontWeight: 500,
                     }}
                   >
-                    Career goal
+                    Hobbies
                   </label>
-                  <input
-                    {...register('careerGoal')}
-                    placeholder="Example: Build a career in AI research and data systems"
-                    style={inputStyle(Boolean(errors.careerGoal))}
-                  />
-                  {errors.careerGoal ? (
+                  <select
+                    multiple
+                    value={hobbies}
+                    onChange={(event) => updateMultiSelect('hobbies', event)}
+                    style={multiSelectStyle(Boolean(errors.hobbies))}
+                  >
+                    {hobbyOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                  <div style={{ color: 'var(--text-tertiary)', fontSize: 12, marginTop: 6 }}>
+                    Hold Ctrl/Cmd to select multiple hobbies.
+                  </div>
+                  {errors.hobbies ? (
                     <p style={{ color: 'var(--accent-danger)', fontSize: 12, marginTop: 5 }}>
-                      {errors.careerGoal.message}
+                      {errors.hobbies.message}
                     </p>
                   ) : null}
                 </div>
               </div>
-            </div>
 
-            <div>
-              <div style={sectionTitleStyle}>Address</div>
-              <div>
+              <div style={{ marginTop: 14 }}>
                 <label
                   style={{
                     display: 'block',
@@ -626,59 +845,28 @@ export default function RegisterPage() {
                     fontWeight: 500,
                   }}
                 >
-                  Current address
+                  Career goal
                 </label>
                 <textarea
-                  {...register('address')}
+                  {...register('careerGoal')}
                   rows={4}
-                  placeholder="Flat / street / city / state / PIN code"
-                  style={{
-                    ...inputStyle(Boolean(errors.address)),
-                    resize: 'vertical',
-                    minHeight: 120,
-                    fontFamily: 'DM Sans, sans-serif',
-                  }}
+                  placeholder="Describe your academic or career direction"
+                  style={inputStyle(Boolean(errors.careerGoal))}
                 />
-                {errors.address ? (
+                {errors.careerGoal ? (
                   <p style={{ color: 'var(--accent-danger)', fontSize: 12, marginTop: 5 }}>
-                    {errors.address.message}
+                    {errors.careerGoal.message}
                   </p>
                 ) : null}
               </div>
             </div>
 
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: 16,
-                paddingTop: 8,
-                borderTop: '1px solid var(--border-default)',
-                flexWrap: 'wrap',
-              }}
-            >
-              <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
-                Already have an account?{' '}
-                <Link to="/login" style={{ color: 'var(--accent-secondary)', fontWeight: 600 }}>
-                  Sign in
-                </Link>
-              </div>
-
-              <button
-                className="btn-primary"
-                type="submit"
-                disabled={isSubmitting || uploading}
-                style={{
-                  minWidth: 220,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  padding: '13px 18px',
-                }}
-              >
-                {isSubmitting ? 'Submitting registration...' : 'Submit for approval'}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: 13 }}>
+                Your preferences will be stored and reused for compatibility clustering after registration.
+              </p>
+              <button className="btn-primary" type="submit" disabled={isSubmitting || uploading}>
+                {isSubmitting ? 'Submitting...' : 'Submit registration'}
               </button>
             </div>
           </form>
@@ -687,3 +875,4 @@ export default function RegisterPage() {
     </div>
   )
 }
+

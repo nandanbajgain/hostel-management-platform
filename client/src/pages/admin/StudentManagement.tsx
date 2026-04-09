@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { BedDouble, GraduationCap, Search, Users, X } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -18,8 +18,14 @@ type Student = {
   avatarUrl?: string
   enrollmentNo?: string
   course?: string
+  coursePreference?: string
   gender?: string
   sportsInterests?: string[]
+  hobbies?: string[]
+  sleepSchedule?: string
+  noiseTolerance?: string
+  studyHours?: number
+  sleepHours?: number
   careerGoal?: string
   address?: string
   parentContactNo?: string
@@ -36,10 +42,20 @@ type Suggestion = {
   id: string
   name: string
   course?: string
+  coursePreference?: string
   sportsInterests: string[]
+  hobbies: string[]
+  sleepSchedule?: string
+  noiseTolerance?: string
+  studyHours?: number
+  sleepHours?: number
   careerGoal?: string
   score: number
+  compatibilityBand: string
+  sameCluster: boolean
+  clusterLabel: string
   reasons: string[]
+  approvalStatus: ApprovalStatus
   allocation?: {
     isActive: boolean
     room?: { id: string; number: string; block: string; floor: number; capacity: number }
@@ -55,6 +71,16 @@ type RoomApiItem = {
   status: string
   amenities: string[]
   allocations: Array<{ user: { id: string; name: string; email: string } }>
+}
+
+const pillStyle: React.CSSProperties = {
+  borderRadius: 999,
+  padding: '4px 10px',
+  border: '1px solid var(--border-default)',
+  background: 'rgba(255,255,255,0.03)',
+  color: 'var(--text-secondary)',
+  fontSize: 11,
+  fontWeight: 700,
 }
 
 export default function StudentManagement() {
@@ -94,8 +120,8 @@ export default function StudentManagement() {
   const filteredStudents = useMemo(() => {
     const q = studentSearch.trim().toLowerCase()
     if (!q) return activeList
-    return activeList.filter((s) => {
-      const hay = `${s.name} ${s.email} ${s.enrollmentNo ?? ''} ${s.course ?? ''}`.toLowerCase()
+    return activeList.filter((student) => {
+      const hay = `${student.name} ${student.email} ${student.enrollmentNo ?? ''} ${student.course ?? ''}`.toLowerCase()
       return hay.includes(q)
     })
   }, [activeList, studentSearch])
@@ -123,30 +149,6 @@ export default function StudentManagement() {
   const approvalMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: 'APPROVED' | 'REJECTED' }) =>
       api.patch(`/users/students/${id}/approval`, { status }),
-    onMutate: async ({ id, status }) => {
-      const pendingKey = ['students', 'pending', sortBy] as const
-      const approvedKey = ['students', 'approved', sortBy] as const
-      await Promise.all([
-        queryClient.cancelQueries({ queryKey: pendingKey }),
-        queryClient.cancelQueries({ queryKey: approvedKey }),
-      ])
-
-      const prevPending = queryClient.getQueryData<Student[]>(pendingKey) || []
-      const prevApproved = queryClient.getQueryData<Student[]>(approvedKey) || []
-      const student = prevPending.find((s) => s.id === id)
-
-      if (status === 'APPROVED' && student) {
-        queryClient.setQueryData<Student[]>(pendingKey, (current = []) => current.filter((s) => s.id !== id))
-        queryClient.setQueryData<Student[]>(approvedKey, (current = []) => [
-          { ...student, approvalStatus: 'APPROVED' },
-          ...current,
-        ])
-      } else {
-        queryClient.setQueryData<Student[]>(pendingKey, (current = []) => current.filter((s) => s.id !== id))
-      }
-
-      return { pendingKey, approvedKey, prevPending, prevApproved }
-    },
     onSuccess: async (_res, variables) => {
       toast.success('Student status updated')
       await queryClient.invalidateQueries({ queryKey: ['students'] })
@@ -159,9 +161,7 @@ export default function StudentManagement() {
         setAllotOpen(true)
       }
     },
-    onError: (error: unknown, _vars, context) => {
-      if (context?.prevPending) queryClient.setQueryData(context.pendingKey, context.prevPending)
-      if (context?.prevApproved) queryClient.setQueryData(context.approvedKey, context.prevApproved)
+    onError: (error: unknown) => {
       toast.error(getErrorMessage(error, 'Could not update student'))
     },
   })
@@ -182,6 +182,14 @@ export default function StudentManagement() {
     },
   })
 
+  const formatLabel = (value?: string | null) =>
+    value
+      ? value
+          .split('_')
+          .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
+          .join(' ')
+      : 'Not shared'
+
   const isLoading = pendingQuery.isLoading || approvedQuery.isLoading
   if (isLoading) {
     return (
@@ -198,7 +206,7 @@ export default function StudentManagement() {
         <div>
           <h1 style={{ fontFamily: 'Sora', fontSize: 24, margin: 0 }}>Student Profiles</h1>
           <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>
-            Approve registrations, then allot rooms with a clean audit trail.
+            Approve registrations and review model-based compatibility suggestions before allotment.
           </p>
         </div>
 
@@ -256,10 +264,10 @@ export default function StudentManagement() {
               cursor: 'pointer',
             }}
           >
-            <option value="course">📚 Course</option>
-            <option value="sports">⚽ Sports</option>
-            <option value="career">🎯 Career goal</option>
-            <option value="approval">✓ Approval</option>
+            <option value="course">Course</option>
+            <option value="sports">Sports</option>
+            <option value="career">Career goal</option>
+            <option value="approval">Approval</option>
           </select>
         </div>
       </div>
@@ -269,7 +277,7 @@ export default function StudentManagement() {
         <input
           value={studentSearch}
           onChange={(e) => setStudentSearch(e.target.value)}
-          placeholder={view === 'pending' ? 'Search pending registrations…' : 'Search approved students…'}
+          placeholder={view === 'pending' ? 'Search pending registrations...' : 'Search approved students...'}
           style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)' }}
         />
       </div>
@@ -277,7 +285,7 @@ export default function StudentManagement() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : '1.2fr 0.8fr',
+          gridTemplateColumns: isMobile ? '1fr' : '1.15fr 0.85fr',
           gap: 16,
         }}
       >
@@ -310,24 +318,20 @@ export default function StudentManagement() {
                         {student.enrollmentNo} · {student.course}
                       </div>
                       <div style={{ color: 'var(--text-secondary)', fontSize: 12, marginTop: 6 }}>
-                        {(student.sportsInterests || []).join(', ')} · {student.careerGoal}
+                        {formatLabel(student.coursePreference)} · {formatLabel(student.sleepSchedule)} · {formatLabel(student.noiseTolerance)}
                       </div>
                     </div>
                   </div>
                   <StatusBadge status={student.approvalStatus} />
                 </div>
                 <div style={{ marginTop: 10, color: 'var(--text-tertiary)', fontSize: 12 }}>
-                  Room:{' '}
-                  {student.allocation?.room
-                    ? `${student.allocation.room.number} (Block ${student.allocation.room.block})`
-                    : 'Not allocated'}
+                  Room: {student.allocation?.room ? `${student.allocation.room.number} (Block ${student.allocation.room.block})` : 'Not allocated'}
                 </div>
               </button>
             ))}
 
             {!pendingQuery.isFetching && !approvedQuery.isFetching && filteredStudents.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--text-secondary)' }}>
-                <div style={{ fontSize: 40, marginBottom: 12 }}>👥</div>
                 <div style={{ fontSize: 13 }}>
                   {studentSearch ? 'No students match your search' : `No ${view} students yet`}
                 </div>
@@ -349,8 +353,14 @@ export default function StudentManagement() {
                 <div><strong style={{ color: 'var(--text-primary)' }}>Phone:</strong> {selectedStudent.phone}</div>
                 <div><strong style={{ color: 'var(--text-primary)' }}>Gender:</strong> {selectedStudent.gender}</div>
                 <div><strong style={{ color: 'var(--text-primary)' }}>Course:</strong> {selectedStudent.course}</div>
+                <div><strong style={{ color: 'var(--text-primary)' }}>Academic stream:</strong> {formatLabel(selectedStudent.coursePreference)}</div>
+                <div><strong style={{ color: 'var(--text-primary)' }}>Sports:</strong> {(selectedStudent.sportsInterests || []).join(', ') || 'Not shared'}</div>
+                <div><strong style={{ color: 'var(--text-primary)' }}>Hobbies:</strong> {(selectedStudent.hobbies || []).join(', ') || 'Not shared'}</div>
+                <div><strong style={{ color: 'var(--text-primary)' }}>Sleep schedule:</strong> {formatLabel(selectedStudent.sleepSchedule)}</div>
+                <div><strong style={{ color: 'var(--text-primary)' }}>Noise tolerance:</strong> {formatLabel(selectedStudent.noiseTolerance)}</div>
+                <div><strong style={{ color: 'var(--text-primary)' }}>Study hours:</strong> {selectedStudent.studyHours ? `${selectedStudent.studyHours} hrs/day` : 'Not shared'}</div>
+                <div><strong style={{ color: 'var(--text-primary)' }}>Sleep hours:</strong> {selectedStudent.sleepHours ? `${selectedStudent.sleepHours} hrs/day` : 'Not shared'}</div>
                 <div><strong style={{ color: 'var(--text-primary)' }}>Career goal:</strong> {selectedStudent.careerGoal}</div>
-                <div><strong style={{ color: 'var(--text-primary)' }}>Sports:</strong> {(selectedStudent.sportsInterests || []).join(', ')}</div>
                 <div><strong style={{ color: 'var(--text-primary)' }}>Parent contact:</strong> {selectedStudent.parentContactNo}</div>
                 <div><strong style={{ color: 'var(--text-primary)' }}>Address:</strong> {selectedStudent.address}</div>
               </div>
@@ -420,16 +430,16 @@ export default function StudentManagement() {
                       ) : null}
                     </div>
 
-                    {!selectedStudent.allocation?.room && (suggestionsQuery.data || []).some((s) => s.allocation?.room?.id) ? (
+                    {!selectedStudent.allocation?.room && (suggestionsQuery.data || []).some((suggestion) => suggestion.allocation?.room?.id) ? (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                         {(suggestionsQuery.data || [])
-                          .filter((s) => s.allocation?.room?.id)
+                          .filter((suggestion) => suggestion.allocation?.room?.id)
                           .slice(0, 3)
-                          .map((s) => (
+                          .map((suggestion) => (
                             <button
-                              key={s.id}
+                              key={suggestion.id}
                               onClick={() => {
-                                const roomId = s.allocation?.room?.id
+                                const roomId = suggestion.allocation?.room?.id
                                 if (!roomId) return
                                 allocateMutation.mutate({ userId: selectedStudent.id, roomId })
                               }}
@@ -445,7 +455,7 @@ export default function StudentManagement() {
                                 fontWeight: 800,
                               }}
                             >
-                              Allot with {s.name.split(' ')[0]} ({s.allocation?.room?.number})
+                              Allot with {suggestion.name.split(' ')[0]} ({suggestion.allocation?.room?.number})
                             </button>
                           ))}
                       </div>
@@ -459,14 +469,14 @@ export default function StudentManagement() {
           <div className="card">
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
               <Users size={18} color="var(--accent-secondary)" />
-              <h3 style={{ margin: 0, fontFamily: 'Sora', fontSize: 17 }}>Roommate suggestions</h3>
+              <h3 style={{ margin: 0, fontFamily: 'Sora', fontSize: 17 }}>Compatibility suggestions</h3>
             </div>
 
             {suggestionsQuery.isLoading ? (
               <LoadingSpinner />
             ) : (suggestionsQuery.data || []).length === 0 ? (
               <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
-                No compatible approved roommates found yet for the selected student.
+                No compatible students found yet for the selected profile.
               </p>
             ) : (
               <div style={{ display: 'grid', gap: 10 }}>
@@ -487,12 +497,30 @@ export default function StudentManagement() {
                           {candidate.course}
                         </div>
                       </div>
-                      <span style={{ color: 'var(--accent-secondary)', fontWeight: 900 }}>
-                        Score {candidate.score}
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ color: 'var(--accent-secondary)', fontWeight: 900 }}>
+                          {candidate.score}%
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
+                          {candidate.compatibilityBand}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      <span style={{ ...pillStyle, border: '1px solid rgba(34,211,238,0.24)', background: 'rgba(34,211,238,0.10)', color: 'var(--text-primary)' }}>
+                        {candidate.clusterLabel}
                       </span>
+                      <span style={pillStyle}>{candidate.approvalStatus}</span>
+                      {candidate.sameCluster ? <span style={pillStyle}>same cluster</span> : null}
                     </div>
                     <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
                       {candidate.reasons.join(' · ')}
+                    </div>
+                    <div style={{ marginTop: 6, fontSize: 12, color: 'var(--text-tertiary)' }}>
+                      Stream {formatLabel(candidate.coursePreference)} · Sleep {formatLabel(candidate.sleepSchedule)} · Noise {formatLabel(candidate.noiseTolerance)}
+                    </div>
+                    <div style={{ marginTop: 6, fontSize: 12, color: 'var(--text-tertiary)' }}>
+                      Hobbies: {candidate.hobbies.join(', ') || 'Not shared'}
                     </div>
                     <div style={{ marginTop: 6, fontSize: 12, color: 'var(--text-tertiary)' }}>
                       Current room: {candidate.allocation?.room?.number || 'Not allocated'}
@@ -570,7 +598,7 @@ export default function StudentManagement() {
                 <input
                   value={roomSearch}
                   onChange={(e) => setRoomSearch(e.target.value)}
-                  placeholder="Search by room number, block, floor…"
+                  placeholder="Search by room number, block, floor..."
                   style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)' }}
                 />
               </div>
@@ -639,3 +667,4 @@ export default function StudentManagement() {
     </div>
   )
 }
+
