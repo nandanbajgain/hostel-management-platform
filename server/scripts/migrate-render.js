@@ -36,7 +36,7 @@ const resolveFailedMigrations = new Promise((resolve) => {
   resolve_cmd.on('close', (code) => {
     clearTimeout(resolveTimeout);
     if (code === 0 || code === 1) { // 0 = success, 1 = already resolved/no failed migrations
-      console.log('[Render Migration] ✓ Ready to deploy migrations');
+      console.log('[Render Migration] [OK] Ready to deploy migrations');
     } else {
       console.warn('[Render Migration] ⚠ Resolve returned code', code);
     }
@@ -73,7 +73,7 @@ resolveFailedMigrations.then(() => {
     migrationSuccess = code === 0;
     
     if (migrationSuccess) {
-      console.log('[Render Migration] ✓ Migrations applied successfully');
+      console.log('[Render Migration] [OK] Migrations applied successfully');
       runSeed();
     } else {
       console.warn('[Render Migration] ⚠ Migrations failed with code ' + code + ', continuing with app startup');
@@ -106,7 +106,7 @@ function runSeed() {
   seed.on('close', (code) => {
     clearTimeout(seedTimeout);
     if (code === 0) {
-      console.log('[Render Migration] ✓ Database seeded successfully');
+      console.log('[Render Migration] [OK] Database seeded successfully');
     } else {
       console.warn('[Render Migration] ⚠ Seed failed with code ' + code);
     }
