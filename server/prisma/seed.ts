@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 async function main() {
   const hash = (password: string) => bcrypt.hash(password, 10);
 
-  await prisma.user.upsert({
+  const admin = await prisma.user.upsert({
     where: { email: 'admin@sau.ac.in' },
     update: {},
     create: {
@@ -33,7 +33,7 @@ async function main() {
     },
   });
 
-  await prisma.user.upsert({
+  const warden = await prisma.user.upsert({
     where: { email: 'warden@sau.ac.in' },
     update: {},
     create: {
@@ -57,40 +57,6 @@ async function main() {
       parentContactNo: '+91-9999999992',
       approvalStatus: 'APPROVED',
       approvedAt: new Date(),
-    },
-  });
-
-  // ... existing code ...
-async function main() {
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@test.com' },
-    update: {},
-    create: {
-      email: 'admin@test.com',
-      name: 'Admin User',
-      password: await hashPassword('password'),
-      role: 'ADMIN',
-      profile: {
-        create: {
-          isApproved: true,
-        },
-      },
-    },
-  });
-
-  const warden = await prisma.user.upsert({
-    where: { email: 'warden@test.com' },
-    update: {},
-    create: {
-      email: 'warden@test.com',
-      name: 'Warden User',
-      password: await hashPassword('password'),
-      role: 'WARDEN',
-      profile: {
-        create: {
-          isApproved: true,
-        },
-      },
     },
   });
 
@@ -126,75 +92,6 @@ async function main() {
 
   // Seed leave applications
   await seedLeaveApplications(student.id);
-}
-
-async function seedLeaveApplications(studentId: string) {
-  console.log('Seeding leave applications...');
-  const today = new Date();
-
-  const leaves = [
-    // 1. Pending leave
-    {
-      studentId,
-      leaveType: 'HOME',
-      reason: 'Going home for a family function.',
-      fromDate: new Date(today.setDate(today.getDate() + 2)),
-      toDate: new Date(today.setDate(today.getDate() + 5)),
-      destination: 'My Hometown',
-      contactNumber: '1234567890',
-      status: 'PENDING',
-    },
-    // 2. Leave approved by warden, pending admin
-    {
-      studentId,
-      leaveType: 'PERSONAL',
-      reason: 'Attending a friends wedding.',
-      fromDate: new Date(today.setDate(today.getDate() + 10)),
-      toDate: new Date(today.setDate(today.getDate() + 12)),
-      destination: 'Wedding City',
-      contactNumber: '1234567890',
-      status: 'APPROVED_BY_WARDEN',
-      wardenRemark: 'Approved. Enjoy the wedding.',
-    },
-    // 3. Fully approved leave
-    {
-      studentId,
-      leaveType: 'MEDICAL',
-      reason: 'Scheduled doctor appointment.',
-      fromDate: new Date(new Date().setMonth(today.getMonth() - 1)),
-      toDate: new Date(new Date().setMonth(today.getMonth() - 1) + 3),
-      destination: 'Local Hospital',
-      contactNumber: '1234567890',
-      status: 'APPROVED',
-      wardenRemark: 'Approved for medical reasons.',
-      adminRemark: 'Final approval granted.',
-    },
-    // 4. Rejected leave
-    {
-      studentId,
-      leaveType: 'OTHER',
-      reason: 'Going on a trip with friends.',
-      fromDate: new Date(new Date().setMonth(today.getMonth() - 2)),
-      toDate: new Date(new Date().setMonth(today.getMonth() - 2) + 7),
-      destination: 'Tourist Place',
-      contactNumber: '1234567890',
-      status: 'REJECTED',
-      wardenRemark: 'Rejected. Not a valid reason for leave during exams.',
-    },
-  ];
-
-  for (const leave of leaves) {
-    await prisma.leave.create({
-      data: leave,
-    });
-  }
-
-  console.log('Finished seeding leave applications.');
-}
-
-main()
-  .catch((e) => {
-// ... existing code ...
 
   const blocks = ['A', 'B', 'C'];
   const rooms: Array<{ id: string; number: string }> = [];
@@ -408,8 +305,8 @@ main()
   for (const complaint of complaints) {
     await prisma.complaint.upsert({
       where: { token: complaint.token },
-      update: complaint,
-      create: complaint,
+      update: { ...complaint },
+      create: { ...complaint },
     });
   }
 
@@ -438,16 +335,16 @@ main()
     {
       content:
         'Mess timings:\n' +
-        '- Breakfast: 8:30 AM â€“ 10:30 AM\n' +
-        '- Lunch: 12:30 PM â€“ 2:30 PM\n' +
-        '- Dinner: 7:30 PM â€“ 9:30 PM\n' +
+        '- Breakfast: 8:30 AM – 10:30 AM\n' +
+        '- Lunch: 12:30 PM – 2:30 PM\n' +
+        '- Dinner: 7:30 PM – 9:30 PM\n' +
         'Timings may change on holidays/special days; confirm with the Mess Manager if needed.',
       metadata: { type: 'mess', title: 'Mess timings' },
     },
     {
       content:
         'Weekly mess menu (subject to change):\n\n' +
-        'Breakfast (8:30 AM â€“ 10:30 AM)\n' +
+        'Breakfast (8:30 AM – 10:30 AM)\n' +
         '- Monday: Besan chilla + chutney; cornflakes; milk; tea; boiled eggs; banana\n' +
         '- Tuesday: Poha; cornflakes; milk; tea; boiled eggs; banana\n' +
         '- Wednesday: Vada sambar / Idli sambar; cornflakes; milk; tea; boiled eggs; banana\n' +
@@ -455,7 +352,7 @@ main()
         '- Friday: Upma with chutney; cornflakes; milk; tea; boiled eggs; banana\n' +
         '- Saturday: Chhole-bhature; cornflakes; milk; tea; boiled eggs; banana\n' +
         '- Sunday: Aloo paratha; cornflakes; milk; tea; boiled eggs; banana\n\n' +
-        'Lunch (12:30 PM â€“ 2:30 PM)\n' +
+        'Lunch (12:30 PM – 2:30 PM)\n' +
         '- Monday: Butter paneer masala / Butter chicken + chana dal + rice + roti + raita\n' +
         '- Tuesday: Kadhi pakoda + aloo jeera + rice + roti + raita\n' +
         '- Wednesday: Fish curry / Kadhai paneer + lal masoor dal + rice + roti + raita\n' +
@@ -463,7 +360,7 @@ main()
         '- Friday: Sri Lankan chicken curry / Paneer do pyaza + black masoor dal + rice + roti + raita\n' +
         '- Saturday: Khichdi + aloo fry + chutney + mixed raita + papad\n' +
         '- Sunday: Baingan bharta + arhar dal fry + rice + roti + salad\n\n' +
-        'Dinner (7:30 PM â€“ 9:30 PM)\n' +
+        'Dinner (7:30 PM – 9:30 PM)\n' +
         '- Monday: Gobhi masala + arhar dal + rice + roti + salad\n' +
         '- Tuesday: Mixed vegetables + moong dal + rice + roti + salad\n' +
         '- Wednesday: Aloo shimla + mixed dal + rice + roti + salad\n' +
@@ -601,8 +498,75 @@ main()
   );
 }
 
+async function seedLeaveApplications(studentId: string) {
+  console.log('Seeding leave applications...');
+  const today = new Date();
+
+  const leaves = [
+    // 1. Pending leave
+    {
+      studentId,
+      leaveType: 'HOME',
+      reason: 'Going home for a family function.',
+      fromDate: new Date(today.setDate(today.getDate() + 2)),
+      toDate: new Date(today.setDate(today.getDate() + 5)),
+      destination: 'My Hometown',
+      contactNumber: '1234567890',
+      status: 'PENDING',
+    },
+    // 2. Leave approved by warden, pending admin
+    {
+      studentId,
+      leaveType: 'PERSONAL',
+      reason: 'Attending a friends wedding.',
+      fromDate: new Date(today.setDate(today.getDate() + 10)),
+      toDate: new Date(today.setDate(today.getDate() + 12)),
+      destination: 'Wedding City',
+      contactNumber: '1234567890',
+      status: 'APPROVED_BY_WARDEN',
+      wardenRemark: 'Approved. Enjoy the wedding.',
+    },
+    // 3. Fully approved leave
+    {
+      studentId,
+      leaveType: 'MEDICAL',
+      reason: 'Scheduled doctor appointment.',
+      fromDate: new Date(new Date().setMonth(today.getMonth() - 1)),
+      toDate: new Date(new Date().setMonth(today.getMonth() - 1) + 3),
+      destination: 'Local Hospital',
+      contactNumber: '1234567890',
+      status: 'APPROVED',
+      wardenRemark: 'Approved for medical reasons.',
+      adminRemark: 'Final approval granted.',
+    },
+    // 4. Rejected leave
+    {
+      studentId,
+      leaveType: 'OTHER',
+      reason: 'Going on a trip with friends.',
+      fromDate: new Date(new Date().setMonth(today.getMonth() - 2)),
+      toDate: new Date(new Date().setMonth(today.getMonth() - 2) + 7),
+      destination: 'Tourist Place',
+      contactNumber: '1234567890',
+      status: 'REJECTED',
+      wardenRemark: 'Rejected. Not a valid reason for leave during exams.',
+    },
+  ];
+
+  for (const leave of leaves) {
+    await prisma.leave.create({
+      data: leave,
+    });
+  }
+
+  console.log('Finished seeding leave applications.');
+}
+
 main()
-  .catch(console.error)
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
   .finally(async () => {
     await prisma.$disconnect();
   });
