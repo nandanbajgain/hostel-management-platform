@@ -147,7 +147,11 @@ export function StudentChatPageV2() {
       <div className="flex flex-col h-screen bg-gradient-to-br from-sky-50 via-white to-teal-50">
         <AnimatePresence>
           {showMoodSelector && (
-            <MoodSelector onSelect={handleCreateSession} isLoading={isCreatingSession} />
+            <MoodSelector
+              onSelect={handleCreateSession}
+              isLoading={isCreatingSession}
+              onClose={() => setShowMoodSelector(false)}
+            />
           )}
         </AnimatePresence>
 

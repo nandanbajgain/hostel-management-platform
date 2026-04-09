@@ -1,13 +1,15 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { X } from 'lucide-react';
 import type { Mood } from '../../types';
 
 interface MoodSelectorProps {
   onSelect: (mood: Mood, topic: string) => void;
   isLoading?: boolean;
+  onClose?: () => void;
 }
 
-export function MoodSelector({ onSelect, isLoading }: MoodSelectorProps) {
+export function MoodSelector({ onSelect, isLoading, onClose }: MoodSelectorProps) {
   const moods: Array<{ value: Mood; emoji: string; label: string }> = [
     { value: 'ANXIOUS', emoji: '😰', label: 'Anxious' },
     { value: 'SAD', emoji: '😢', label: 'Sad' },
@@ -19,17 +21,40 @@ export function MoodSelector({ onSelect, isLoading }: MoodSelectorProps) {
   const [selectedMood, setSelectedMood] = React.useState<Mood | null>(null);
   const [topic, setTopic] = React.useState('');
 
+  React.useEffect(() => {
+    if (!onClose) return;
+    const handler = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onClose]);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      onClick={(event) => {
+        if (!onClose) return;
+        if (event.target === event.currentTarget) onClose();
+      }}
     >
       <motion.div
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
-        className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full"
+        className="relative bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full"
       >
+        {onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-4 top-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        ) : null}
         <h2 className="text-3xl font-bold text-center mb-1 text-gray-900">How are you feeling?</h2>
         <p className="text-center text-gray-600 mb-8 text-sm">Select your current mood</p>
 
