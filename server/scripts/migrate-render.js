@@ -16,11 +16,13 @@ console.log('[Render Migration] Current working directory:', process.cwd());
 let migrationComplete = false;
 let migrationSuccess = false;
 
+const MIGRATION_TO_RESOLVE = '20260407_professional_counselling';
+
 // Step 1: Try to resolve any failed migrations
 const resolveFailedMigrations = new Promise((resolve) => {
   console.log('[Render Migration] Step 1: Attempting to resolve any failed migrations...');
   
-  const resolve_cmd = spawn('npx', ['prisma', 'migrate', 'resolve', '--rolled-back', '20260407154231'], {
+  const resolve_cmd = spawn('npx', ['prisma', 'migrate', 'resolve', '--rolled-back', MIGRATION_TO_RESOLVE], {
     stdio: 'inherit',
     shell: true,
   });

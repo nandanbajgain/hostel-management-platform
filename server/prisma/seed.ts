@@ -48,14 +48,48 @@ async function main() {
     },
   });
 
+  // ... existing code ...
+async function main() {
+  const admin = await prisma.user.upsert({
+    where: { email: 'admin@test.com' },
+    update: {},
+    create: {
+      email: 'admin@test.com',
+      name: 'Admin User',
+      password: await hashPassword('password'),
+      role: 'ADMIN',
+      profile: {
+        create: {
+          isApproved: true,
+        },
+      },
+    },
+  });
+
+  const warden = await prisma.user.upsert({
+    where: { email: 'warden@test.com' },
+    update: {},
+    create: {
+      email: 'warden@test.com',
+      name: 'Warden User',
+      password: await hashPassword('password'),
+      role: 'WARDEN',
+      profile: {
+        create: {
+          isApproved: true,
+        },
+      },
+    },
+  });
+
   const student = await prisma.user.upsert({
     where: { email: 'student@sau.ac.in' },
     update: {},
     create: {
-      name: 'Arjun Mehta',
       email: 'student@sau.ac.in',
-      role: 'STUDENT',
+      name: 'Arjun Mehta',
       password: await hash('student123'),
+      role: 'STUDENT',
       phone: '+91-9876543210',
       avatarUrl: 'https://placehold.co/200x200/png',
       enrollmentNo: 'SAU-2026-001',
@@ -69,6 +103,80 @@ async function main() {
       approvedAt: new Date(),
     },
   });
+
+  console.log({ admin, warden, student });
+
+  // Seed leave applications
+  await seedLeaveApplications(student.id);
+}
+
+async function seedLeaveApplications(studentId: string) {
+  console.log('Seeding leave applications...');
+  const today = new Date();
+
+  const leaves = [
+    // 1. Pending leave
+    {
+      studentId,
+      leaveType: 'HOME',
+      reason: 'Going home for a family function.',
+      fromDate: new Date(today.setDate(today.getDate() + 2)),
+      toDate: new Date(today.setDate(today.getDate() + 5)),
+      destination: 'My Hometown',
+      contactNumber: '1234567890',
+      status: 'PENDING',
+    },
+    // 2. Leave approved by warden, pending admin
+    {
+      studentId,
+      leaveType: 'PERSONAL',
+      reason: 'Attending a friends wedding.',
+      fromDate: new Date(today.setDate(today.getDate() + 10)),
+      toDate: new Date(today.setDate(today.getDate() + 12)),
+      destination: 'Wedding City',
+      contactNumber: '1234567890',
+      status: 'APPROVED_BY_WARDEN',
+      wardenRemark: 'Approved. Enjoy the wedding.',
+    },
+    // 3. Fully approved leave
+    {
+      studentId,
+      leaveType: 'MEDICAL',
+      reason: 'Scheduled doctor appointment.',
+      fromDate: new Date(new Date().setMonth(today.getMonth() - 1)),
+      toDate: new Date(new Date().setMonth(today.getMonth() - 1) + 3),
+      destination: 'Local Hospital',
+      contactNumber: '1234567890',
+      status: 'APPROVED',
+      wardenRemark: 'Approved for medical reasons.',
+      adminRemark: 'Final approval granted.',
+    },
+    // 4. Rejected leave
+    {
+      studentId,
+      leaveType: 'OTHER',
+      reason: 'Going on a trip with friends.',
+      fromDate: new Date(new Date().setMonth(today.getMonth() - 2)),
+      toDate: new Date(new Date().setMonth(today.getMonth() - 2) + 7),
+      destination: 'Tourist Place',
+      contactNumber: '1234567890',
+      status: 'REJECTED',
+      wardenRemark: 'Rejected. Not a valid reason for leave during exams.',
+    },
+  ];
+
+  for (const leave of leaves) {
+    await prisma.leave.create({
+      data: leave,
+    });
+  }
+
+  console.log('Finished seeding leave applications.');
+}
+
+main()
+  .catch((e) => {
+// ... existing code ...
 
   const blocks = ['A', 'B', 'C'];
   const rooms: Array<{ id: string; number: string }> = [];
