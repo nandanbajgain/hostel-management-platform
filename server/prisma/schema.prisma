@@ -14,6 +14,7 @@ enum Role {
   WARDEN
   ADMIN
   COUNSELLOR
+  DOCTOR
 }
 
 enum Gender {
@@ -112,6 +113,33 @@ enum LeaveStatus {
   CANCELLED
 }
 
+enum HealthAppointmentStatus {
+  REQUESTED
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PrescriptionStatus {
+  ISSUED
+  DISPENSED
+  CANCELLED
+}
+
+enum InsuranceClaimStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  PAID
+}
+
+enum MedicalDocumentStatus {
+  SUBMITTED
+  VERIFIED
+  REJECTED
+}
+
 model User {
   id              String         @id @default(uuid())
   name            String
@@ -145,10 +173,16 @@ model User {
   notifications   Notification[]
   cleaningFeedback CleaningFeedback[]
   counsellorProfile CounsellorProfile?
+  doctorProfile DoctorProfile?
   studentSessions CounsellingSession[] @relation("StudentSessions")
   sentMessages CounsellingMessage[] @relation("SentMessages")
   journalEntries JournalEntry[]
   createdAppointments CounsellingAppointment[] @relation("AppointmentCreatedBy")
+  healthAppointments HealthAppointment[] @relation("HealthAppointmentStudent")
+  insuranceClaims InsuranceClaim[] @relation("InsuranceClaimStudent")
+  processedClaims InsuranceClaim[] @relation("InsuranceClaimProcessedBy")
+  medicalLeaveRequests MedicalLeaveRequest[] @relation("MedicalLeaveStudent")
+  verifiedMedicalLeaveRequests MedicalLeaveRequest[] @relation("MedicalLeaveVerifiedBy")
   leaves Leave[]
   @@map("users")
 }
@@ -410,6 +444,164 @@ model JournalEntry {
   @@index([studentId, createdAt])
   @@index([isShared])
   @@map("journal_entries")
+}
+
+model DoctorProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  specialization String?
+  clinicLocation String?
+  availabilityNote String?
+  isActive      Boolean  @default(true)
+  availability  DoctorAvailability[]
+  appointments  HealthAppointment[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("doctor_profiles")
+}
+
+model DoctorAvailability {
+  id             String   @id @default(cuid())
+  doctorId       String
+  doctor         DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  dayOfWeek      Int
+  startMinute    Int
+  endMinute      Int
+  slotDurationMins Int @default(30)
+  isActive       Boolean @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([doctorId, dayOfWeek])
+  @@map("doctor_availability")
+}
+
+model HealthAppointment {
+  id          String  @id @default(cuid())
+  studentId   String
+  student     User    @relation("HealthAppointmentStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  doctorId    String
+  doctor      DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  status      HealthAppointmentStatus @default(REQUESTED)
+  scheduledAt DateTime
+  durationMins Int @default(30)
+  reason      String?
+  adminNote   String?
+  record      HealthVisitRecord?
+  claims      InsuranceClaim[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([studentId, scheduledAt])
+  @@index([doctorId, scheduledAt])
+  @@index([status])
+  @@map("health_appointments")
+}
+
+model HealthVisitRecord {
+  id            String  @id @default(cuid())
+  appointmentId String  @unique
+  appointment   HealthAppointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  symptoms      String?
+  diagnosis     String?
+  treatmentPlan String?
+  doctorNotes   String?
+  attachments   String[] @default([])
+  prescription  Prescription?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("health_visit_records")
+}
+
+model Prescription {
+  id        String @id @default(cuid())
+  recordId  String @unique
+  record    HealthVisitRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  status    PrescriptionStatus @default(ISSUED)
+  notes     String?
+  items     PrescriptionItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@map("prescriptions")
+}
+
+model PrescriptionItem {
+  id             String @id @default(cuid())
+  prescriptionId String
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  medicineId     String?
+  medicine       Medicine? @relation(fields: [medicineId], references: [id], onDelete: SetNull)
+  medicineName   String
+  dosage         String?
+  frequency      String?
+  durationDays   Int?
+  instructions   String?
+  quantity       Int?
+
+  @@index([prescriptionId])
+  @@index([medicineId])
+  @@map("prescription_items")
+}
+
+model Medicine {
+  id               String @id @default(cuid())
+  name             String @unique
+  description      String?
+  unit             String?
+  stockQty         Int @default(0)
+  lowStockThreshold Int @default(10)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  prescriptionItems PrescriptionItem[]
+
+  @@index([stockQty])
+  @@map("medicines")
+}
+
+model InsuranceClaim {
+  id            String @id @default(cuid())
+  studentId     String
+  student       User   @relation("InsuranceClaimStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  appointmentId String?
+  appointment   HealthAppointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  amount        Int?
+  description   String?
+  billUrl       String?
+  status        InsuranceClaimStatus @default(SUBMITTED)
+  adminNote     String?
+  processedById String?
+  processedBy   User? @relation("InsuranceClaimProcessedBy", fields: [processedById], references: [id], onDelete: SetNull)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([studentId, createdAt])
+  @@index([status])
+  @@map("insurance_claims")
+}
+
+model MedicalLeaveRequest {
+  id          String @id @default(cuid())
+  studentId   String
+  student     User   @relation("MedicalLeaveStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  fromDate    DateTime
+  toDate      DateTime
+  reason      String
+  documentUrl String?
+  status      MedicalDocumentStatus @default(SUBMITTED)
+  adminNote   String?
+  verifiedById String?
+  verifiedBy  User?  @relation("MedicalLeaveVerifiedBy", fields: [verifiedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([studentId, createdAt])
+  @@index([status])
+  @@map("medical_leave_requests")
 }
 
 model Leave {

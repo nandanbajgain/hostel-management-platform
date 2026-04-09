@@ -8,6 +8,7 @@ import { ChatbotModule } from './modules/chatbot/chatbot.module';
 import { CleaningModule } from './modules/cleaning/cleaning.module';
 import { ComplaintsModule } from './modules/complaints/complaints.module';
 import { CounsellingModule } from './modules/counselling/counselling.module';
+import { CampusHealthModule } from './modules/campus-health/campus-health.module';
 import { LeaveModule } from './modules/leave/leave.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { MaintenanceModule } from './modules/maintenance/maintenance.module';
@@ -44,6 +45,7 @@ import { PrismaModule } from './prisma/prisma.module';
     AnnouncementsModule,
     DashboardModule,
     CounsellingModule,
+    CampusHealthModule,
     LeaveModule,
   ],
   controllers: [AppController],

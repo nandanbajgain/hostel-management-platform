@@ -1,4 +1,4 @@
-export type Role = 'STUDENT' | 'WARDEN' | 'ADMIN' | 'COUNSELLOR'
+export type Role = 'STUDENT' | 'WARDEN' | 'ADMIN' | 'COUNSELLOR' | 'DOCTOR'
 export type Gender = 'MALE' | 'FEMALE' | 'OTHER'
 export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
 export type RoomStatus = 'AVAILABLE' | 'OCCUPIED' | 'MAINTENANCE' | 'RESERVED'
@@ -133,6 +133,11 @@ export type Mood = 'ANXIOUS' | 'SAD' | 'STRESSED' | 'OKAY' | 'GOOD'
 export type MessageType = 'TEXT' | 'RESOURCE' | 'NOTE'
 export type AppointmentStatus = 'REQUESTED' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
 
+export type HealthAppointmentStatus = 'REQUESTED' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
+export type PrescriptionStatus = 'ISSUED' | 'DISPENSED' | 'CANCELLED'
+export type InsuranceClaimStatus = 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'PAID'
+export type MedicalDocumentStatus = 'SUBMITTED' | 'VERIFIED' | 'REJECTED'
+
 export interface CounsellorProfile {
   id: string
   userId: string
@@ -181,6 +186,107 @@ export interface JournalEntry {
   isShared: boolean
   createdAt: string
   updatedAt: string
+}
+
+export interface DoctorProfile {
+  id: string
+  userId: string
+  specialization?: string | null
+  clinicLocation?: string | null
+  availabilityNote?: string | null
+  isActive: boolean
+  user: Pick<User, 'id' | 'name' | 'email' | 'avatarUrl'>
+}
+
+export interface HealthAppointment {
+  id: string
+  studentId: string
+  doctorId: string
+  status: HealthAppointmentStatus
+  scheduledAt: string
+  durationMins: number
+  reason?: string | null
+  adminNote?: string | null
+  doctor?: DoctorProfile
+  student?: Pick<User, 'id' | 'name' | 'email' | 'avatarUrl'>
+  record?: HealthVisitRecord | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface HealthVisitRecord {
+  id: string
+  appointmentId: string
+  symptoms?: string | null
+  diagnosis?: string | null
+  treatmentPlan?: string | null
+  doctorNotes?: string | null
+  attachments: string[]
+  prescription?: Prescription | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Prescription {
+  id: string
+  recordId: string
+  status: PrescriptionStatus
+  notes?: string | null
+  items?: PrescriptionItem[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PrescriptionItem {
+  id: string
+  prescriptionId: string
+  medicineId?: string | null
+  medicineName: string
+  dosage?: string | null
+  frequency?: string | null
+  durationDays?: number | null
+  instructions?: string | null
+  quantity?: number | null
+}
+
+export interface Medicine {
+  id: string
+  name: string
+  description?: string | null
+  unit?: string | null
+  stockQty: number
+  lowStockThreshold: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface InsuranceClaim {
+  id: string
+  studentId: string
+  appointmentId?: string | null
+  amount?: number | null
+  description?: string | null
+  billUrl?: string | null
+  status: InsuranceClaimStatus
+  adminNote?: string | null
+  processedById?: string | null
+  createdAt: string
+  updatedAt: string
+  student?: Pick<User, 'id' | 'name' | 'email'>
+}
+
+export interface MedicalLeaveRequest {
+  id: string
+  studentId: string
+  fromDate: string
+  toDate: string
+  reason: string
+  documentUrl?: string | null
+  status: MedicalDocumentStatus
+  adminNote?: string | null
+  createdAt: string
+  updatedAt: string
+  student?: Pick<User, 'id' | 'name' | 'email'>
 }
 
 export interface CounsellingSession {

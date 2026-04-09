@@ -28,6 +28,9 @@ import LeaveApplicationPage from '@/pages/student/LeaveApplicationPage'
 import LeaveHistoryPage from '@/pages/student/LeaveHistoryPage'
 import WardenLeavesPage from '@/pages/warden/WardenLeavesPage'
 import AdminLeavesPage from '@/pages/admin/AdminLeavesPage'
+import CampusHealthStudentPage from '@/pages/health/CampusHealthStudentPage'
+import CampusHealthDoctorPage from '@/pages/health/CampusHealthDoctorPage'
+import CampusHealthAdminPage from '@/pages/health/CampusHealthAdminPage'
 
 function ProtectedRoute({
   children,
@@ -97,6 +100,8 @@ export default function App() {
                     <WardenDashboard />
                   ) : user?.role === 'COUNSELLOR' ? (
                     <CounsellorDashboard />
+                  ) : user?.role === 'DOCTOR' ? (
+                    <CampusHealthDoctorPage />
                   ) : (
                     <StudentDashboard />
                   )
@@ -161,6 +166,30 @@ export default function App() {
                 element={
                   <ProtectedRoute roles={['COUNSELLOR']}>
                     <CounsellorDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="health"
+                element={
+                  <ProtectedRoute roles={['STUDENT']}>
+                    <CampusHealthStudentPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="health/doctor"
+                element={
+                  <ProtectedRoute roles={['DOCTOR']}>
+                    <CampusHealthDoctorPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="health/admin"
+                element={
+                  <ProtectedRoute roles={['ADMIN']}>
+                    <CampusHealthAdminPage />
                   </ProtectedRoute>
                 }
               />

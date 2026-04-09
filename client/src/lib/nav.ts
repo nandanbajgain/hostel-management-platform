@@ -12,6 +12,7 @@ import {
   UserCheck,
   Wrench,
   CheckSquare,
+  Stethoscope,
 } from 'lucide-react'
 
 export type NavItem = { to: string; icon: LucideIcon; label: string }
@@ -24,6 +25,7 @@ const studentNav: NavItem[] = [
   { to: '/complaints', icon: AlertCircle, label: 'My Complaints' },
   { to: '/complaints/anonymous', icon: EyeOff, label: 'Report Anonymously' },
   { to: '/counselling', icon: Heart, label: 'Talk to Counsellor' },
+  { to: '/health', icon: Stethoscope, label: 'Campus Health' },
   { to: '/maintenance', icon: Wrench, label: 'Maintenance' },
   { to: '/track', icon: Search, label: 'Track Complaint' },
 ]
@@ -35,6 +37,7 @@ const adminNav: NavItem[] = [
   { to: '/admin/leaves', icon: CalendarDays, label: 'Leave Requests' },
   { to: '/cleaning', icon: CalendarDays, label: 'Cleaning Schedule' },
   { to: '/students', icon: UserCheck, label: 'Students' },
+  { to: '/health/admin', icon: Stethoscope, label: 'Campus Health' },
   { to: '/maintenance', icon: Wrench, label: 'Maintenance' },
 ]
 
@@ -54,9 +57,15 @@ const counsellorNav: NavItem[] = [
   { to: '/maintenance', icon: Wrench, label: 'Maintenance' },
 ]
 
+const doctorNav: NavItem[] = [
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/health/doctor', icon: Stethoscope, label: 'Campus Health' },
+]
+
 export function getNavItems(role: Role | undefined): NavItem[] {
   if (role === 'ADMIN') return adminNav
   if (role === 'WARDEN') return wardenNav
   if (role === 'COUNSELLOR') return counsellorNav
+  if (role === 'DOCTOR') return doctorNav
   return studentNav
 }

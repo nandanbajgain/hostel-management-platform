@@ -90,6 +90,33 @@ async function main() {
 
   console.log({ admin, warden, student });
 
+  const doctor = await prisma.user.upsert({
+    where: { email: 'doctor@sau.ac.in' },
+    update: {},
+    create: {
+      name: 'Dr. Ananya Rao',
+      email: 'doctor@sau.ac.in',
+      role: 'DOCTOR',
+      password: await hash('doctor123'),
+      avatarUrl: 'https://placehold.co/200x200/png',
+      enrollmentNo: 'DOCTOR-001',
+      course: 'Campus Health Center',
+      coursePreference: 'SOCIOLOGY',
+      gender: 'FEMALE',
+      sportsInterests: ['Yoga'],
+      hobbies: ['Reading'],
+      sleepSchedule: 'EARLY_BIRD',
+      noiseTolerance: 'LOW',
+      studyHours: 5,
+      sleepHours: 8,
+      careerGoal: 'Provide accessible campus healthcare',
+      address: 'Campus Health Center, SAU',
+      parentContactNo: '+91-9999999993',
+      approvalStatus: 'APPROVED',
+      approvedAt: new Date(),
+    },
+  });
+
   // Seed leave applications
   await seedLeaveApplications(student.id);
 
@@ -496,6 +523,46 @@ async function main() {
   console.log(
     'Seed complete. Demo credentials:\n  Admin: admin@sau.ac.in / admin123\n  Warden: warden@sau.ac.in / warden123\n  Student: student@sau.ac.in / student123\n  Counsellor: counsellor@sau.ac.in / counsellor123',
   );
+
+  // Seed doctor profile + availability + sample medicines
+  const doctorProfile = await prisma.doctorProfile.upsert({
+    where: { userId: doctor.id },
+    update: {},
+    create: {
+      userId: doctor.id,
+      specialization: 'General Physician',
+      clinicLocation: 'Campus Health Center',
+      availabilityNote: 'Mon-Fri, 10:00 AM - 4:00 PM',
+      isActive: true,
+    },
+  });
+
+  await prisma.doctorAvailability.deleteMany({ where: { doctorId: doctorProfile.id } });
+  await prisma.doctorAvailability.createMany({
+    data: [1, 2, 3, 4, 5].map((dayOfWeek) => ({
+      doctorId: doctorProfile.id,
+      dayOfWeek,
+      startMinute: 10 * 60,
+      endMinute: 16 * 60,
+      slotDurationMins: 30,
+      isActive: true,
+    })),
+  });
+
+  const meds = [
+    { name: 'Paracetamol', stockQty: 200, unit: 'tablet' },
+    { name: 'Cetirizine', stockQty: 120, unit: 'tablet' },
+    { name: 'ORS', stockQty: 80, unit: 'sachet' },
+    { name: 'Ibuprofen', stockQty: 90, unit: 'tablet' },
+  ];
+
+  for (const med of meds) {
+    await prisma.medicine.upsert({
+      where: { name: med.name },
+      update: { stockQty: med.stockQty, unit: med.unit },
+      create: { name: med.name, stockQty: med.stockQty, unit: med.unit, lowStockThreshold: 20 },
+    });
+  }
 }
 
 async function seedLeaveApplications(studentId: string) {
