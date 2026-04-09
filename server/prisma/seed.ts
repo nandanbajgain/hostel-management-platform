@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, LeaveType, LeaveStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -506,53 +506,53 @@ async function seedLeaveApplications(studentId: string) {
     // 1. Pending leave
     {
       studentId,
-      leaveType: 'HOME',
+      leaveType: LeaveType.HOME,
       reason: 'Going home for a family function.',
       fromDate: new Date(today.setDate(today.getDate() + 2)),
       toDate: new Date(today.setDate(today.getDate() + 5)),
       destination: 'My Hometown',
       contactNumber: '1234567890',
       parentContact: '0987654321',
-      status: 'PENDING',
+      status: LeaveStatus.PENDING,
     },
     // 2. Leave approved by warden, pending admin
     {
       studentId,
-      leaveType: 'PERSONAL',
+      leaveType: LeaveType.PERSONAL,
       reason: 'Attending a friends wedding.',
       fromDate: new Date(today.setDate(today.getDate() + 10)),
       toDate: new Date(today.setDate(today.getDate() + 12)),
       destination: 'Wedding City',
       contactNumber: '1234567890',
       parentContact: '0987654321',
-      status: 'APPROVED_BY_WARDEN',
+      status: LeaveStatus.APPROVED_BY_WARDEN,
       wardenRemark: 'Approved. Enjoy the wedding.',
     },
     // 3. Fully approved leave
     {
       studentId,
-      leaveType: 'MEDICAL',
+      leaveType: LeaveType.MEDICAL,
       reason: 'Scheduled doctor appointment.',
       fromDate: new Date(new Date().setMonth(today.getMonth() - 1)),
       toDate: new Date(new Date().setMonth(today.getMonth() - 1) + 3),
       destination: 'Local Hospital',
       contactNumber: '1234567890',
       parentContact: '0987654321',
-      status: 'APPROVED',
+      status: LeaveStatus.APPROVED,
       wardenRemark: 'Approved for medical reasons.',
       adminRemark: 'Final approval granted.',
     },
     // 4. Rejected leave
     {
       studentId,
-      leaveType: 'OTHER',
+      leaveType: LeaveType.OTHER,
       reason: 'Going on a trip with friends.',
       fromDate: new Date(new Date().setMonth(today.getMonth() - 2)),
       toDate: new Date(new Date().setMonth(today.getMonth() - 2) + 7),
       destination: 'Tourist Place',
       contactNumber: '1234567890',
       parentContact: '0987654321',
-      status: 'REJECTED',
+      status: LeaveStatus.REJECTED,
       wardenRemark: 'Rejected. Not a valid reason for leave during exams.',
     },
   ];
