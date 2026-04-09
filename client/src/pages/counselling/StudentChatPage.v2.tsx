@@ -11,6 +11,7 @@ import {
   Heart,
   Phone,
   Award,
+  ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import {
@@ -141,6 +142,29 @@ export function StudentChatPageV2() {
     });
   };
 
+  const formatRecentDate = (date: string | Date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }).format(new Date(date));
+  };
+
+  const getSessionTitle = (sess: any) => {
+    const topic = (sess?.topic || '').trim();
+    if (topic) return topic;
+    if (sess?.mood) return `Session • ${String(sess.mood).toLowerCase()}`;
+    return 'Conversation';
+  };
+
+  const getSessionPreview = (sess: any) => {
+    const messages = Array.isArray(sess?.messages) ? sess.messages : [];
+    const lastMessage = messages[messages.length - 1];
+    const content = (lastMessage?.content || '').trim();
+    if (content) return content;
+    return 'Tap to continue this conversation';
+  };
+
   // No active session - welcome screen
   if (!activeSessionId) {
     return (
@@ -237,11 +261,19 @@ export function StudentChatPageV2() {
                 transition={{ delay: 0.2 }}
                 className="mt-8 pt-8 border-t border-gray-200 w-full"
               >
-                <h2 className="font-semibold text-gray-800 mb-4 text-left">
-                  Recent Conversations
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-semibold text-gray-900 text-left">Recent Conversations</h2>
+                  <span className="text-xs text-gray-500">{Math.min(sessions.length, 4)} shown</span>
+                </div>
                 <div className="space-y-3">
-                  {sessions.slice(0, 3).map((sess: any) => (
+                  {[...sessions]
+                    .sort((a: any, b: any) => {
+                      const aTime = new Date(a?.startedAt || 0).getTime();
+                      const bTime = new Date(b?.startedAt || 0).getTime();
+                      return bTime - aTime;
+                    })
+                    .slice(0, 4)
+                    .map((sess: any) => (
                     <motion.button
                       key={sess.id}
                       whileHover={{ scale: 1.02 }}
@@ -249,12 +281,38 @@ export function StudentChatPageV2() {
                         setError(null);
                         setActiveSessionId(sess.id);
                       }}
-                      className="w-full p-4 bg-white rounded-lg hover:shadow-md transition-all text-left border border-gray-100"
+                      className="w-full p-4 bg-white/90 backdrop-blur-sm rounded-2xl hover:shadow-md transition-all text-left border border-gray-200/70 group"
                     >
-                      <p className="font-medium text-gray-800">{sess.topic || 'Untitled'}</p>
-                      <p className="text-sm text-gray-500">
-                        {new Date(sess.startedAt).toLocaleDateString()}
-                      </p>
+                      <div className="flex items-start gap-3">
+                        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center text-white font-bold shadow-sm flex-shrink-0">
+                          <MessageCircle className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="font-semibold text-gray-900 truncate">{getSessionTitle(sess)}</p>
+                            <span className="text-xs text-gray-500 flex-shrink-0">
+                              {formatRecentDate(sess.startedAt)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                            {getSessionPreview(sess)}
+                          </p>
+                          <div className="mt-3 flex items-center justify-between">
+                            <span
+                              className={`text-[11px] px-2 py-0.5 rounded-full border ${
+                                sess.status === 'ACTIVE'
+                                  ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                  : sess.status === 'OPEN'
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    : 'bg-gray-50 text-gray-700 border-gray-200'
+                              }`}
+                            >
+                              {(sess.status || 'OPEN').toString()}
+                            </span>
+                            <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
+                          </div>
+                        </div>
+                      </div>
                     </motion.button>
                   ))}
                 </div>
