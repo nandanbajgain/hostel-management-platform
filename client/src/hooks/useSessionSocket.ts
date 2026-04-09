@@ -1,5 +1,8 @@
 import { useEffect } from 'react';
-import { getSocket } from '../lib/socket';
+import {
+  disconnectCounsellingSocket,
+  getCounsellingSocket,
+} from '../lib/counsellingSocket';
 import type { Socket } from 'socket.io-client';
 
 interface UseSessionSocketOptions {
@@ -17,13 +20,22 @@ export function useSessionSocket({
   onRead,
   onCounsellorStatus,
 }: UseSessionSocketOptions) {
-  const socket: Socket | null = getSocket();
+  const socket: Socket | null = getCounsellingSocket();
 
   useEffect(() => {
     if (!socket || !sessionId) return;
 
-    // Join session
-    socket.emit('counselling:join-session', { sessionId });
+    // Ensure we (re)connect with the latest token
+    socket.auth = { token: localStorage.getItem('accessToken') };
+    if (!socket.connected) socket.connect();
+
+    const joinSession = () => {
+      socket.emit('counselling:join-session', { sessionId });
+    };
+
+    // Join immediately if already connected, otherwise when connected.
+    if (socket.connected) joinSession();
+    socket.on('connect', joinSession);
 
     // Listen for messages
     const messageHandler = (message: any) => {
@@ -50,10 +62,14 @@ export function useSessionSocket({
     socket.on('counselling:counsellor-status-updated', statusHandler);
 
     return () => {
+      socket.off('connect', joinSession);
       socket.off('counselling:message', messageHandler);
       socket.off('counselling:typing', typingHandler);
       socket.off('counselling:messages-read', readHandler);
       socket.off('counselling:counsellor-status-updated', statusHandler);
+
+      // Keep this socket scoped to counselling usage; disconnect when leaving.
+      disconnectCounsellingSocket();
     };
   }, [socket, sessionId, onMessage, onTyping, onRead, onCounsellorStatus]);
 
