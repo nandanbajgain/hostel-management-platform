@@ -3,11 +3,14 @@ import {
   IsArray,
   IsEmail,
   IsEnum,
+  IsInt,
   IsOptional,
   IsUrl,
   IsString,
   Matches,
+  Max,
   MaxLength,
+  Min,
   MinLength,
 } from 'class-validator';
   import { Gender, Role } from '@prisma/client';
@@ -42,6 +45,9 @@ export class RegisterDto {
   @MaxLength(120)
   course: string;
 
+  @IsString()
+  coursePreference: string;
+
   @IsEnum(Gender)
   gender: Gender;
 
@@ -49,6 +55,27 @@ export class RegisterDto {
   @ArrayNotEmpty()
   @IsString({ each: true })
   sportsInterests: string[];
+
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
+  hobbies: string[];
+
+  @IsString()
+  sleepSchedule: string;
+
+  @IsString()
+  noiseTolerance: string;
+
+  @IsInt()
+  @Min(1)
+  @Max(16)
+  studyHours: number;
+
+  @IsInt()
+  @Min(3)
+  @Max(12)
+  sleepHours: number;
 
   @IsString()
   careerGoal: string;

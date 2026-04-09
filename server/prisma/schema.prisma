@@ -115,8 +115,14 @@ model User {
   avatarUrl       String?
   enrollmentNo    String?        @unique
   course          String?
+  coursePreference String?
   gender          Gender?
-  sportsInterests String[]
+  sportsInterests String[]       @default([])
+  hobbies         String[]       @default([])
+  sleepSchedule   String?
+  noiseTolerance  String?
+  studyHours      Int?
+  sleepHours      Int?
   careerGoal      String?
   address         String?
   parentContactNo String?
