@@ -51,8 +51,9 @@ const resolveFailedMigrations = new Promise((resolve) => {
 // Step 2: Deploy migrations
 resolveFailedMigrations.then(() => {
   console.log('[Render Migration] Step 2: Deploying migrations...');
+  console.log('[Render Migration] Working directory:', process.cwd());
   
-  const migrate = spawn('npx', ['prisma', 'migrate', 'deploy', '--skip-generate'], {
+  const migrate = spawn('npx', ['prisma', 'migrate', 'deploy'], {
     stdio: 'inherit',
     shell: true,
   });
@@ -119,9 +120,10 @@ function runSeed() {
 
 function startApp() {
   console.log('[Render Migration] Starting NestJS application...');
-  console.log('[Render Migration] Executing: node dist/main.js');
+  console.log('[Render Migration] Current working directory:', process.cwd());
+  console.log('[Render Migration] Executing: npm run start:prod');
   
-  const app = spawn('node', ['dist/main.js'], {
+  const app = spawn('npm', ['run', 'start:prod'], {
     stdio: 'inherit',
     shell: true,
   });
